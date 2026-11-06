@@ -1,7 +1,7 @@
 // Kiểm tra bản GitHub Pages: có cấu hình Firebase (giả) thì hiện nút đăng nhập, không lỗi
 import puppeteer from 'puppeteer-core'; import fs from 'fs'; import http from 'http';
 const fake=`window.FIREBASE_CONFIG={apiKey:"AIzaSyFakeKeyForLocalTest0000000000000",authDomain:"demo-tv.firebaseapp.com",projectId:"demo-tv",appId:"1:1:web:1"};`;
-const srv=http.createServer((q,s)=>{ if(q.url.startsWith('/firebase-config.js')){ s.setHeader('Content-Type','text/javascript'); s.end(fake); return; } s.setHeader('Content-Type','text/html;charset=utf-8'); s.end(fs.readFileSync('docs/index.html','utf8')); }).listen(0);
+const srv=http.createServer((q,s)=>{ if(q.url.startsWith('/firebase-config.js')){ s.setHeader('Content-Type','text/javascript'); s.end(fake); return; } s.setHeader('Content-Type','text/html;charset=utf-8'); s.end(fs.readFileSync(process.argv[2]||'docs/index.html','utf8')); }).listen(0);
 const b=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:'new',args:['--use-angle=metal','--enable-gpu']});
 for(const [name,vp] of [['pc',{width:1400,height:860}],['phone',{width:390,height:844,deviceScaleFactor:2,isMobile:true,hasTouch:true}]]){
   const p=await b.newPage(); await p.setViewport(vp); const errs=[]; p.on('pageerror',e=>errs.push(e.message));

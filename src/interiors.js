@@ -93,8 +93,13 @@ function wc(b,r){
   for(let z=.2;z<D-.1;z+=.16) b.box('wood',.05,W-.05,h-.18,h-.1,z,z+.09,{faces:'yxXzZ'});
   const n=Math.floor((W-1)/1.1);
   for(let i=0;i<=n;i++){ const x=.5+i*1.1; b.box('stain',x-.022,x+.022,.1,2.1,.1,1.7,{collide:true}); if(i<n){ b.box('white',x+.03,x+1.07,.1,2.1,1.68,1.72,{collide:true}); const xc=x+.55; b.box('white',xc-.18,xc+.18,0,.42,.35,.95); b.box('white',xc-.22,xc+.22,.42,.46,.3,.98); b.box('door',x+.04,x+.05,.1,2.1,0,0); } }
-  if(D>3.2){ b.box('white',.5,W-.5,.8,.86,D-.62,D-.1,{collide:true}); for(let x=.9;x<W-.7;x+=.95){ b.cyl('white',x,D-.37,.86,.92,.2,{seg:12}); b.rod('inox',[x,.9,D-.12],[x,1.05,D-.25],.012); }
-    b.box('inox',.5,W-.5,1.2,2.2,D-.1,D-.09); }
+  // Dãy bồn rửa và gương đặt trên tường bên (z = D là tường có cửa ra vào, z = 0 là tường ngoài)
+  const z0=2.3,z1=D-1.3;
+  if(z1-z0>=.9){ const xa=W-.6,xb=W-.06;
+    b.box('granite',xa,xb,.8,.86,z0,z1,{collide:true}); b.box('white',xa+.04,xb,0,.8,z0+.02,z0+.06); b.box('white',xa+.04,xb,0,.8,z1-.06,z1-.02);
+    const n=Math.max(1,Math.floor((z1-z0)/.95));
+    for(let i=0;i<n;i++){ const z=z0+(i+.5)*(z1-z0)/n; b.cyl('white',W-.34,z,.86,.93,.2,{seg:16}); b.rod('inox',[W-.08,.9,z],[W-.08,1.1,z],.014); b.rod('inox',[W-.08,1.1,z],[W-.22,1.06,z],.012); }
+    b.box('mirror',W-.075,W-.06,1.2,2.15,z0+.05,z1-.05); }
   tube(b,W/2,h-.15,D*.3); tube(b,W/2,h-.15,D*.7);
   b.setFrame(s);
 }

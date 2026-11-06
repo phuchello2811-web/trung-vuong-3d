@@ -44,7 +44,7 @@ export function makeMaterials(aniso,envRef){
   const std=(p,ud={})=>{ const m=new THREE.MeshStandardMaterial(p); m.userData=ud; return m; };
   const M={};
   // Tường trắng trát, có đường ron mảnh như ảnh mặt đứng
-  const plaster=genTex(1024,(u,v)=>{ const N=fbm(u,v,6,5,1),n2=fbm(u,v,48,2,2),gv=Math.abs(((v*8)%1)-.5)>.492,gu=Math.abs(((u*4)%1)-.5)>.496; const j=gu||gv?.955:1,k=(.965+(N-.5)*.05+(n2-.5)*.025)*j; return {c:[222*k,219*k,210*k],h:n2*.25+(j<1?-.35:0),r:.88}; },2.4,{normal:1.1});
+  const plaster=genTex(1024,(u,v)=>{ const N=fbm(u,v,6,5,1),n2=fbm(u,v,48,2,2),k=.972+(N-.5)*.04+(n2-.5)*.02; return {c:[224*k,222*k,214*k],h:n2*.22,r:.9}; },2.4,{normal:.7});
   M.plaster=std({...plaster,roughness:.92});
   const paint=genTex(512,(u,v)=>{ const N=fbm(u,v,5,4,3),k=.975+(N-.5)*.04; return {c:[226*k,224*k,216*k],h:fbm(u,v,64,2,4)*.2}; },2,{normal:.8});
   M.paint=std({...paint,roughness:.9}); M.ceil=std({...paint,roughness:.95,color:0xfbfbf7});
@@ -110,6 +110,7 @@ export function makeMaterials(aniso,envRef){
   const val=genTex(512,(u,v)=>{ const w=Math.sin(u*Math.PI*2*24),k=.86+w*.12; return {c:[22*k,58*k,168*k],h:w*.5+.5,r:.7}; },2,{normal:3});
   M.valance=std({...val,roughness:.75,side:THREE.DoubleSide});
   M.stele=std({color:0xe9e6dd,roughness:.6});
+  M.mirror=std({color:0xe8eef2,metalness:1,roughness:.04,envMapIntensity:1.2});
   M.yellowPaint=std({color:0xf2c62a,roughness:.85}); M.stoolBlue=std({color:0x2f80d8,roughness:.5});
   M.blueSteel=std({color:0x1f5fc0,metalness:.4,roughness:.45});
   M.pinkFlower=std({color:0xd94b8f,roughness:.8});

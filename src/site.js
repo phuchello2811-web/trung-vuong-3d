@@ -194,7 +194,7 @@ export function buildScooters(b){
     b.setFrame(s); };
   let i=0; for(let z=-34;z<34;z+=1.05){ if(Math.random()<.45) continue; if(z>-9&&z<-2) continue; one(27.8+Math.random()*.15,z,Math.PI*.04+(Math.random()-.5)*.14,cols[(i++)%cols.length]); }
   for(let z=-70;z<70;z+=1.1){ if(Math.random()<.68) continue; one(42.3+Math.random()*.2,z,Math.PI+(Math.random()-.5)*.14,cols[(i++)%cols.length]); }
-  for(let p=700;p<790;p+=9.6){ if(Math.random()<.2) continue; one(X(395)+Math.random()*.05,Z(p)+.3,Math.PI/2+(Math.random()-.5)*.1,cols[(i++)%cols.length]); }
+  for(let p=722;p<786;p+=9.6){ if(Math.random()<.2) continue; one(X(371)+Math.random()*.05,Z(p)+.3,Math.PI/2+(Math.random()-.5)*.1,cols[(i++)%cols.length]); }
 }
 
 export { surfaceNets };

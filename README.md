@@ -1,14 +1,16 @@
 # Trường THCS Trưng Vương 3D
 
-Mô hình 3D tỉ lệ 1:1 của Trường THCS Trưng Vương (88 Yên Bái, Hải Châu, Đà Nẵng) kèm game học tập **Một ngày ở Trưng Vương**. Chạy thẳng trên trình duyệt, máy tính và điện thoại, dựng bằng Three.js.
+Mô hình 3D tỉ lệ 1:1 của Trường THCS Trưng Vương (88 Yên Bái, Hải Châu, Đà Nẵng). Chạy thẳng trên trình duyệt, máy tính và điện thoại, dựng bằng Three.js.
+
+> **Game đang tạm tắt** theo đề nghị của nhà trường, bản đăng chỉ có chế độ tham quan. Code game vẫn nằm trong `src/game/`; build lại có game bằng `npm run build:game`.
 
 Mô hình độc lập, dựng từ bản vẽ và ảnh đã công bố, không phải trang chính thức của nhà trường.
 
-## Hai chế độ
+## Chế độ
 
 **Tham quan trường**: xem toàn cảnh, đi bộ hoặc bay, sơ đồ từng tầng, đo khoảng cách bằng mét thật, đổi giờ trong ngày (vị trí mặt trời tính theo toạ độ thật của trường).
 
-**Một ngày ở Trưng Vương** (game):
+**Một ngày ở Trưng Vương** (game, đang tạm tắt):
 
 | Ở đâu | Làm gì |
 |---|---|
@@ -29,8 +31,10 @@ Mỗi ngày có 6 nhiệm vụ; một giây ngoài đời là một phút trong 
 ```bash
 npm install
 npm run dev      # http://localhost:5173, sửa src/ là trang tự tải lại
-npm run build    # tạo docs/index.html (GitHub Pages) và dist/index.html (bản một file)
-npm test         # đi bộ qua cầu thang, cửa, giao diện, game, bản Pages (cần Google Chrome)
+npm run build    # tạo docs/index.html (GitHub Pages) và dist/index.html (bản một file), chỉ tham quan
+npm run build:game  # như trên nhưng có game và đăng nhập Firebase
+npm test         # đi bộ qua cầu thang, cửa, giao diện, quét lỗ hổng rơi tự do (cần Google Chrome)
+npm run test:game   # kiểm thử game và đăng nhập trên một bản build riêng, không ghi đè docs/
 ```
 
 ## Đăng lên GitHub Pages
@@ -41,7 +45,7 @@ Mỗi lần sửa code: `npm run build`, commit cả thư mục `docs/`, rồi p
 
 ## Bật đăng nhập Google và tạo tài khoản (Firebase)
 
-Chưa cấu hình thì trang vẫn chạy, chỉ tắt đăng nhập.
+Chỉ cần khi bật lại game (`npm run build:game`). Chưa cấu hình thì trang vẫn chạy, chỉ tắt đăng nhập.
 
 1. Vào [Firebase console](https://console.firebase.google.com), tạo project mới (gói miễn phí Spark là đủ).
 2. **Build → Authentication → Get started**, thẻ *Sign-in method*: bật **Google** và **Email/Password**.

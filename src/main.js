@@ -300,7 +300,9 @@ async function main(){
     toTour(){ goView(0); showHint('orbit'); },
     toGame(){ player.frozen=false; player.flyTo([X(498),1.6,Z(527)],Math.PI/2,.06,'walk',1.4); [...$('modes').children].forEach(c=>c.classList.toggle('on',c.dataset.m==='walk')); showHint('walk'); },
   });
-  $('load').hidden=true; $('menu').hidden=false; setTimeout(()=>$('btnGame').focus(),60);
+  $('load').hidden=true;
+  if(game.enabled===false){ showHint('orbit'); $('c').focus({preventScroll:true}); }
+  else { $('menu').hidden=false; setTimeout(()=>$('btnGame').focus(),60); }
   // Giao tiếp để chụp thử nghiệm
   window.__app={game,player,camera,scene,renderer,info:{doorFixes:DOOR_FIXES,cityInfo,tris:meshes.reduce((a,m)=>a+m.geometry.index.count/3,0),meshes:meshes.length,col:colArr.length/9},setHour(h){ hour=h; applySun(true); },goto(p,y,x,m){ player.tween=null; player.mode=m||'fly'; player.pos.set(...p); player.yaw=y; player.pitch=x; player.vel.set(0,0,0); player.grounded=false; camera.position.set(...p); },step(n=1){ for(let i=0;i<n;i++) frame(); },setQ,VIEWS,hud(v){ document.body.classList.toggle('nohud',!v); $('hint').hidden=true; },walkTest(path){ return runWalk(player,path); },orbit(th,ph,r,tx,ty,tz){ const o=player.orbit; player.mode='orbit'; player.tween=null; o.auto=false; o.th=th;o.ph=ph;o.r=r; if(tx!==undefined) o.t.set(tx,ty,tz); }};
   window.__ready=true;
