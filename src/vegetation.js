@@ -89,16 +89,16 @@ export function buildVegetation(b,scene,shrubsXYZ,aniso){
   const bead=(P0,P1,q,y,lenA,lenB,face,step=2.1,skip)=>{ for(let p=P0;p<P1;p+=step*R(.7,1.3)){ if(skip&&p>skip[0]&&p<skip[1]) continue; const c=clump(p,q*.13); if(R()>.42+c*.8) continue; strand(X(q)+R(-.1,.1),y,Z(p),lenA+(lenB-lenA)*Math.pow(c,1.2)*R(.55,1.1),face); } };
   // Dàn hoa phía Đông: thả hai bên dầm
   // Cầu xanh: dây leo rủ dày từ bồn hai mép cầu, gần chạm đất (ảnh)
-  bead(BRIDGE.P0+2,BRIDGE.P1,BRIDGE.Q1+.6,Y[3]+.56,2.8,6.0,Math.PI/2,.8); bead(BRIDGE.P0+2,BRIDGE.P1,BRIDGE.Q0-.6,Y[3]+.56,2.6,5.8,-Math.PI/2,.8);
+  bead(BRIDGE.P0+2,BRIDGE.P1,BRIDGE.Q1+.6,Y[3]+.56,1.6,4.2,Math.PI/2,1.7); bead(BRIDGE.P0+2,BRIDGE.P1,BRIDGE.Q0-.6,Y[3]+.56,1.5,4.0,-Math.PI/2,1.7);
   // Bồn tầng 2 khối Tây, rủ xuống sân; chừa khoảng trước sảnh và bảng tên trường
-  bead(418,695,170.8,Y[2]+.62,1.5,4.3,Math.PI/2,1.0,[516,636]);
+  bead(418,695,170.8,Y[2]+.62,.9,2.2,Math.PI/2,3.4,[516,636]);
   // Dây bám lam đứng và lan can tầng 3-5
   const bays=[417,453.6,496,538,572,607,650,695];
-  for(const p of bays) for(const dx of [-3.5,3.5]) { for(let k=0;k<3;k++) strand(X(165.5)+R(-.05,.05),Y[6]-.4,Z(p+dx+R(-1.6,1.6)),R(6,11.6),Math.PI/2); strand(X(165.5),Y[5]-.2,Z(p+dx*2.4),6+R(-1,1),Math.PI/2); }
+  for(const p of bays) if(R()<.55) strand(X(165.5)+R(-.05,.05),Y[6]-.4,Z(p+R(-3,3)),R(2.5,5.5),Math.PI/2);
   // Giếng trời khối Nam và bồn hành lang
   for(const L of [3,4]){ const yy=Y[L]+.35; b.boxPQ('plaster',248,252,257,422,Y[L]-.35,yy,{collide:false}); b.boxPQ('earth',248.5,251.5,257,422,yy-.04,yy+.002,{faces:'Y'});
-    for(let q=258;q<422;q+=1.7) strand(X(q),yy,Z(252.6),R(2,3.6),0); }
-  for(const L of [2,5]){ const yy=Y[L]+.3; b.boxPQ('plaster',246,302,468.2,471,Y[L]-.35,yy,{collide:false}); for(let p=248;p<301;p+=1.8) strand(X(471.2),yy,Z(p),R(1.8,3.2),Math.PI/2); }
+    for(let q=258;q<422;q+=R(4,7)) strand(X(q),yy,Z(252.6),R(1.1,2.2),0); }
+  for(const L of [2,5]){ const yy=Y[L]+.3; b.boxPQ('plaster',246,302,468.2,471,Y[L]-.35,yy,{collide:false}); for(let p=248;p<301;p+=R(4,6.5)) strand(X(471.2),yy,Z(p),R(1,2),Math.PI/2); }
   // Bụi ở sân vườn và mặt dàn
   for(const s of shrubsXYZ){ for(let k=0;k<2;k++){ const S=R(.6,1.05),yaw=R(0,6.28),t=R(0,1),l=R(.75,1.1); bleaf.push({p:[s[0],s[1]+S*.42,s[2]],q:qu(yaw,R(-.25,.25)),sx:S,sy:S*.9,c:[l,l*(1+t*.1),l*.75],n:[R(-.5,.5),1,R(-.5,.5)]}); } }
   // Cây bụi và hoa giấy hồng trong bồn cầu

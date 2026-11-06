@@ -8,7 +8,7 @@ import { X,Z,M,S,Y,SITE,ROOMS,SLABS,locate,levelFromY,pqFromXZ,FLAG } from './pl
 import { Batch,frameM } from './builder.js';
 import { makeMaterials,textTexture } from './textures.js';
 import { buildSchool,DOOR_FIXES } from './school.js';
-import { buildInteriors } from './interiors.js';
+import { buildInteriors,classNumbers } from './interiors.js';
 import { buildSite,buildGardens,buildStatue,buildBikes,buildScooters,HEDGE } from './site.js';
 import { buildVegetation,windU } from './vegetation.js';
 import { buildCity } from './city.js';
@@ -23,6 +23,48 @@ const tick=()=>new Promise(r=>setTimeout(r,0));
 const prog=async(t,k)=>{ $('loadT').textContent=t; $('pg').firstElementChild.style.width=k+'%'; await tick(); };
 const isTouch=matchMedia('(pointer:coarse)').matches;
 
+// Hình in trong lớp học và phòng hội đồng: bảng phấn ghi ngày hôm nay, áp phích, bảng tin, đồng hồ, tivi, bảng tên phòng, bản đồ
+async function classroomPrints(M4,mk){
+  const F='"Be Vietnam Pro","Helvetica Neue",Arial,sans-serif', H='"Dancing Script",cursive';
+  const cv=(w,h,draw)=>{ const c=document.createElement('canvas'); c.width=w; c.height=h; draw(c.getContext('2d'),w,h); return canvasTex(c); };
+  const now=new Date(), thu=['Chủ nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'][now.getDay()];
+  M4.chalkboard=mk(cv(1440,500,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,w,h); gr.addColorStop(0,'#24493b'); gr.addColorStop(1,'#1d3d31'); g.fillStyle=gr; g.fillRect(0,0,w,h);
+    for(let i=0;i<60;i++){ g.fillStyle=`rgba(255,255,255,${.012+Math.random()*.03})`; g.beginPath(); g.ellipse(Math.random()*w,Math.random()*h,40+Math.random()*160,10+Math.random()*40,Math.random()*3,0,6.3); g.fill(); }
+    g.fillStyle='rgba(244,242,232,.92)'; g.textBaseline='alphabetic';
+    g.font=`600 40px ${H}`; g.textAlign='right'; g.fillText(`${thu}, ngày ${now.getDate()} tháng ${now.getMonth()+1} năm ${now.getFullYear()}`,w-50,70);
+    g.textAlign='center'; g.font=`700 64px ${H}`; g.fillText('Toán',w/2,150);
+    g.textAlign='left'; g.font=`600 46px ${H}`; g.fillText('Bài tập: Giải phương trình',90,250); g.fillText('a) 2x − 6 = 0          b) 3(x + 1) = 2x + 5',130,330);
+    g.fillText('Giải: a) 2x = 6  ⇒  x = 3',130,410); g.strokeStyle='rgba(244,242,232,.6)'; g.lineWidth=3; g.beginPath(); g.moveTo(90,170); g.lineTo(w-90,170); g.stroke(); }),{p:{roughness:.85}});
+  M4.poster5=mk(cv(540,760,(g,w,h)=>{ g.fillStyle='#fff8e6'; g.fillRect(0,0,w,h); g.strokeStyle='#c4161c'; g.lineWidth=16; g.strokeRect(8,8,w-16,h-16);
+    g.fillStyle='#c4161c'; g.fillRect(8,8,w-16,150); g.fillStyle='#ffde00'; g.textAlign='center'; g.font=`800 44px ${F}`; g.fillText('5 ĐIỀU BÁC HỒ DẠY',w/2,78); g.font=`700 28px ${F}`; g.fillText('THIẾU NIÊN, NHI ĐỒNG',w/2,128);
+    const L=['Yêu Tổ quốc, yêu đồng bào.','Học tập tốt, lao động tốt.','Đoàn kết tốt, kỷ luật tốt.','Giữ gìn vệ sinh thật tốt.','Khiêm tốn, thật thà, dũng cảm.'];
+    g.textAlign='left'; L.forEach((t,i)=>{ const y=230+i*104; g.fillStyle='#c4161c'; g.beginPath(); g.arc(62,y-12,26,0,6.3); g.fill(); g.fillStyle='#fff'; g.font=`800 30px ${F}`; g.textAlign='center'; g.fillText(String(i+1),62,y-2); g.textAlign='left'; g.fillStyle='#3a1a10'; g.font=`700 31px ${F}`; g.fillText(t,104,y); }); }),{p:{roughness:.7}});
+  M4.rules=mk(cv(520,700,(g,w,h)=>{ g.fillStyle='#f4f8ff'; g.fillRect(0,0,w,h); g.fillStyle='#1c3f9c'; g.fillRect(0,0,w,120); g.fillStyle='#fff'; g.textAlign='center'; g.font=`800 42px ${F}`; g.fillText('NỘI QUY LỚP HỌC',w/2,78);
+    const L=['Đi học đúng giờ, mặc đồng phục','Lễ phép với thầy cô, hoà nhã với bạn','Giữ trật tự, phát biểu phải xin phép','Học bài, làm bài đầy đủ','Giữ gìn vệ sinh, bảo vệ của công','Không dùng điện thoại trong giờ học'];
+    g.textAlign='left'; g.fillStyle='#14234a'; g.font=`600 27px ${F}`; L.forEach((t,i)=>g.fillText(`${i+1}. ${t}`,36,190+i*84)); }),{p:{roughness:.7}});
+  M4.notice=mk(cv(880,460,(g,w,h)=>{ g.fillStyle='#b98a57'; g.fillRect(0,0,w,h); for(let i=0;i<2400;i++){ g.fillStyle=`rgba(${80+Math.random()*60},${50+Math.random()*30},20,.25)`; g.fillRect(Math.random()*w,Math.random()*h,2,2); }
+    g.fillStyle='#c4161c'; g.fillRect(250,18,380,64); g.fillStyle='#fff'; g.textAlign='center'; g.font=`800 38px ${F}`; g.fillText('BẢNG TIN LỚP',w/2,63);
+    const P=[['#fff7c2','Thời khoá biểu'],['#d9f1ff','Kế hoạch tuần'],['#ffe1e1','Gương người tốt'],['#e4ffd9','Góc học tập'],['#ffffff','Sơ đồ chỗ ngồi']];
+    P.forEach(([c,t],i)=>{ const x=40+i*166,y=110+(i%2)*30; g.save(); g.translate(x+70,y+130); g.rotate((i%2?.03:-.025)); g.fillStyle=c; g.fillRect(-70,-130,140,250); g.fillStyle='#222'; g.font=`700 18px ${F}`; g.textAlign='center'; g.fillText(t,0,-98); g.fillStyle='rgba(40,40,40,.45)'; for(let k=0;k<9;k++) g.fillRect(-56,-76+k*20,112-(k%3)*18,4); g.fillStyle='#d22'; g.beginPath(); g.arc(0,-122,7,0,6.3); g.fill(); g.restore(); }); }),{p:{roughness:.9}});
+  M4.clockFace=mk(cv(256,256,(g,w,h)=>{ g.fillStyle='#fff'; g.beginPath(); g.arc(128,128,122,0,6.3); g.fill(); g.lineWidth=10; g.strokeStyle='#1d1d1d'; g.stroke(); g.fillStyle='#1d1d1d'; g.textAlign='center'; g.textBaseline='middle'; g.font=`700 30px ${F}`;
+    for(let i=1;i<=12;i++){ const a=i/12*6.283-1.5708; g.fillText(String(i),128+Math.cos(a)*92,128+Math.sin(a)*92); }
+    const hh=now.getHours()%12+now.getMinutes()/60, mm=now.getMinutes(); g.lineCap='round'; for(const [v,L,W] of [[hh/12,58,8],[mm/60,86,5]]){ const a=v*6.283-1.5708; g.lineWidth=W; g.beginPath(); g.moveTo(128,128); g.lineTo(128+Math.cos(a)*L,128+Math.sin(a)*L); g.stroke(); } }),{tr:true});
+  M4.clockDigital=mk(cv(320,160,(g,w,h)=>{ g.fillStyle='#08090b'; g.fillRect(0,0,w,h); g.fillStyle='#ff3b30'; g.textAlign='center'; g.textBaseline='middle'; g.font=`700 76px "IBM Plex Mono",monospace`; g.fillText(`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,w/2,66); g.fillStyle='#3ddc84'; g.font=`500 26px "IBM Plex Mono",monospace`; g.fillText(`${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`,w/2,130); }),{em:0xffffff,ei:.6});
+  let logoIm=null; try{ logoIm=await loadImg(LOGO); }catch(e){}
+  M4.tvScreen=mk(cv(800,450,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,w,h); gr.addColorStop(0,'#123a8a'); gr.addColorStop(1,'#0b1e46'); g.fillStyle=gr; g.fillRect(0,0,w,h);
+    if(logoIm){ const lh=230,lw=lh*logoIm.width/logoIm.height; g.drawImage(logoIm,w/2-lw/2,40,lw,lh); }
+    g.fillStyle='#f4c63a'; g.textAlign='center'; g.font=`800 44px ${F}`; g.fillText('TRƯỜNG THCS TRƯNG VƯƠNG',w/2,330); g.fillStyle='#e8eefc'; g.font=`500 28px ${F}`; g.fillText('Chúc các em một ngày học tập vui vẻ',w/2,385); }),{em:0xffffff,ei:.55});
+  M4.vnmap=mk(cv(600,800,(g,w,h)=>{ g.fillStyle='#bfe3f5'; g.fillRect(0,0,w,h); g.strokeStyle='#8b5a2b'; g.lineWidth=14; g.strokeRect(7,7,w-14,h-14);
+    const lon0=101.2,lon1=115.5,lat0=7.4,lat1=24.2, px=l=>30+(l-lon0)/(lon1-lon0)*(w-60), py=l=>110+(lat1-l)/(lat1-lat0)*(h-140);
+    const VN=[[102.1,22.4],[103,22.6],[104,22.8],[105.3,23.3],[106.5,22.9],[107.4,22.1],[108,21.5],[106.7,20.7],[106,19.9],[105.7,19],[106.2,18.2],[107,17.1],[108.2,16.1],[108.8,15.3],[109.2,13.8],[109.4,12.4],[109.2,11.5],[108,10.9],[106.8,10.4],[106.6,9.6],[105.2,8.6],[104.8,9],[104.5,10.4],[105.8,11.5],[106.9,12.1],[107.6,12.7],[107.5,14.7],[106.9,15.5],[106.6,16.3],[105.6,17.5],[104.8,18.3],[104.2,19.2],[104.1,19.8],[104.9,20.2],[103.9,20.6],[103,21],[102.1,22.4]];
+    g.fillStyle='#eed9a6'; g.beginPath(); VN.forEach(([a,b],i)=>g[i?'lineTo':'moveTo'](px(a),py(b))); g.closePath(); g.fill(); g.strokeStyle='#c4161c'; g.lineWidth=2.5; g.stroke();
+    g.fillStyle='#c4161c'; for(const [a,b] of [[111.6,16.5],[112.1,16.3],[112.4,16.6],[111.8,16.8]]){ g.beginPath(); g.arc(px(a),py(b),4,0,6.3); g.fill(); } for(const [a,b] of [[113.8,10.4],[114.3,9.8],[114.8,10.9],[115,8.9],[113.4,9.2]]){ g.beginPath(); g.arc(px(a),py(b),4,0,6.3); g.fill(); }
+    g.fillStyle='#14234a'; g.font=`700 20px ${F}`; g.textAlign='center'; g.fillText('QĐ. Hoàng Sa',px(112),py(17.4)); g.fillText('QĐ. Trường Sa',px(114.2),py(11.6)); g.fillText('BIỂN ĐÔNG',px(111.6),py(13.6));
+    g.beginPath(); g.arc(px(108.22),py(16.07),6,0,6.3); g.fill(); g.font=`600 18px ${F}`; g.textAlign='left'; g.fillText('Đà Nẵng',px(108.4),py(16.07)+6);
+    g.fillStyle='#c4161c'; g.fillRect(14,14,w-28,74); g.fillStyle='#fff'; g.font=`800 30px ${F}`; g.textAlign='center'; g.fillText('BẢN ĐỒ VIỆT NAM',w/2,62); }),{p:{roughness:.6}});
+  const nums=[...classNumbers().values()];
+  for(const n of nums) M4['plate_'+n]=mk(cv(400,192,(g,w,h)=>{ g.fillStyle='#1c3f9c'; g.fillRect(0,0,w,h); g.strokeStyle='#f4c63a'; g.lineWidth=8; g.strokeRect(6,6,w-12,h-12); g.fillStyle='#fff'; g.textAlign='center'; g.font=`700 34px ${F}`; g.fillText('PHÒNG HỌC',w/2,66); g.font=`800 74px ${F}`; g.fillStyle='#f4c63a'; g.fillText(n,w/2,150); }));
+}
 function loadImg(src){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; }); }
 function canvasTex(c){ const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8; return t; }
 function vnFlag(w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d'); g.fillStyle='#da251d'; g.fillRect(0,0,w,h); g.fillStyle='#ffff00'; g.beginPath(); for(let i=0;i<5;i++){ const a=-Math.PI/2+i*4*Math.PI/5,r=h*.31; g[i?'lineTo':'moveTo'](w/2+Math.cos(a)*r,h/2+Math.sin(a)*r); } g.closePath(); g.fill(); return c; }
@@ -33,10 +75,11 @@ async function signMaterials(M4){
     const c=document.createElement('canvas'); c.width=1024; c.height=360; const g=c.getContext('2d'); g.fillStyle='#1c3f9c'; g.fillRect(0,0,1024,360);
     try{ const im=await loadImg(LOGO); const h=290,w=h*im.width/im.height; g.drawImage(im,34,35,w,h); }catch(e){}
     g.fillStyle='#fff'; g.textAlign='center'; g.textBaseline='middle'; const F='"Be Vietnam Pro","Helvetica Neue",Arial,sans-serif';
-    g.font=`700 54px ${F}`; g.fillText('TRƯỜNG TRUNG HỌC CƠ SỞ',610,92); g.font=`700 120px ${F}`; g.fillText('TRƯNG VƯƠNG',610,200); g.font=`500 34px ${F}`; g.fillStyle='#e4e9f4'; g.fillText('88 Yên Bái, Hải Châu, Đà Nẵng',610,292);
+    const x0=300,x1=996,cx=(x0+x1)/2, fit=(t,w,size,y,col)=>{ let s2=size; g.font=`700 ${s2}px ${F}`; while(g.measureText(t).width>x1-x0-24&&s2>12){ s2-=2; g.font=`700 ${s2}px ${F}`; } g.fillStyle=col; g.fillText(t,cx,y); };
+    fit('TRƯỜNG TRUNG HỌC CƠ SỞ',0,54,92,'#ffffff'); fit('TRƯNG VƯƠNG',0,118,200,'#ffffff'); fit('88 Yên Bái, Hải Châu, Đà Nẵng',0,34,292,'#e4e9f4');
     M4.gateSign=mk(canvasTex(c));
   }
-  M4.flagSmall=mk(canvasTex(vnFlag(300,200)),{p:{roughness:.8}}); M4.flagSmall.userData={noAO:true};
+  ['#d7261e','#f5c518','#1f5fd1','#2e9e48','#f07c1e','#8a3fc0'].forEach((c,i)=>{ const m=new THREE.MeshStandardMaterial({color:c,roughness:.8,side:THREE.DoubleSide}); m.userData={noAO:true}; M4['flagC'+i]=m; });
   { // Chữ thư pháp khắc trên bia "Tôn Sư Trọng Đạo"
     const c=document.createElement('canvas'); c.width=256; c.height=720; const g=c.getContext('2d'); g.fillStyle='#3a3936'; g.textAlign='center'; g.textBaseline='middle';
     g.font='700 118px "Dancing Script", cursive'; ['Tôn','Sư','Trọng','Đạo'].forEach((t,i)=>g.fillText(t,128,100+i*170));
@@ -53,6 +96,7 @@ async function signMaterials(M4){
   const c=document.createElement('canvas'); c.width=512;c.height=128; const g=c.getContext('2d'); g.fillStyle='#2a221b'; g.fillRect(0,0,512,128); const hues=['#8a3b2c','#2c5d8a','#d9c9a0','#3a6b4a','#7a5a2b','#c7b48a','#44546a','#b04a3a','#e4dcc5','#26415f'];
   let x=0; while(x<512){ const w=4+Math.random()*9; g.fillStyle=hues[Math.floor(Math.random()*hues.length)]; g.fillRect(x,6+Math.random()*22,w,128); g.fillStyle='rgba(0,0,0,.35)'; g.fillRect(x+w-1,0,1,128); x+=w; }
   const bt=new THREE.CanvasTexture(c); bt.colorSpace=THREE.SRGBColorSpace; bt.wrapS=bt.wrapT=THREE.RepeatWrapping; bt.repeat.set(.8,3.2); M4.books=new THREE.MeshStandardMaterial({map:bt,roughness:.85});
+  await classroomPrints(M4,mk);
   M4.flag=new THREE.MeshStandardMaterial({side:THREE.DoubleSide,roughness:.8}); M4.flag.userData={noAO:true,noCast:false};
 }
 
@@ -63,10 +107,10 @@ function buildSigns(b){
     const m=new THREE.Matrix4().makeBasis(new THREE.Vector3(0,0,-1),new THREE.Vector3(0,1,0),new THREE.Vector3(1,0,0)).setPosition(X(171.22),3.92,Z(576));
     b.add('gold',geo,m); geo.dispose(); }
   // Cờ đỏ sao vàng cắm trên lan can tầng 2 (ảnh sân)
-  for(const p of [532,550,568,586,604,622]){ const x=X(169.6),z=Z(p),y=Y[2]+.62,d=new THREE.Vector3(.45,.89,0).normalize(),L=1.9,n=new THREE.Vector3(.89,-.45,0);
+  [532,550,568,586,604,622].forEach((p,fi)=>{ const x=X(169.6),z=Z(p),y=Y[2]+.62,d=new THREE.Vector3(.45,.89,0).normalize(),L=1.9,n=new THREE.Vector3(.89,-.45,0);
     const top=[x+d.x*L,y+d.y*L,z]; b.rod('flagPole',[x,y,z],top,.014,5);
     const A=new THREE.Vector3(...top).addScaledVector(d,-.04),B=A.clone().addScaledVector(d,-.62),C=B.clone().addScaledVector(n,.9),D=A.clone().addScaledVector(n,.9);
-    b.poly('flagSmall',[A.toArray(),D.toArray(),C.toArray(),B.toArray()],[0,0,1],[[0,1],[1,1],[1,0],[0,0]]); }
+    b.poly('flagC'+fi,[A.toArray(),D.toArray(),C.toArray(),B.toArray()],[0,0,1],[[0,1],[1,1],[1,0],[0,0]]); });
   // Số tầng màu lớn trên vách cầu thang đầu hồi khối Bắc, nhìn từ sân như ảnh
   for(const L of [2,3,4,5]){ const z=Z(714.5)+.01,a=X(484),c=X(510); b.poly('num'+L,[[a,Y[L]+.75,z],[c,Y[L]+.75,z],[c,Y[L]+3.2,z],[a,Y[L]+3.2,z]],[0,0,1],[[0,0],[1,0],[1,1],[0,1]]); }
   // Chữ tiếng Anh trên đỉnh khối xiên

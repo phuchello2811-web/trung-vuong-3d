@@ -110,6 +110,7 @@ export function makeMaterials(aniso,envRef){
   const val=genTex(512,(u,v)=>{ const w=Math.sin(u*Math.PI*2*24),k=.86+w*.12; return {c:[22*k,58*k,168*k],h:w*.5+.5,r:.7}; },2,{normal:3});
   M.valance=std({...val,roughness:.75,side:THREE.DoubleSide});
   M.stele=std({color:0xe9e6dd,roughness:.6});
+  const brushed=genTex(256,(u,v)=>{ const n=fbm(u*.05,v*6,30,3,181),k=.9+n*.12; return {c:[196*k,199*k,202*k],h:n,r:.3}; },.6,{normal:.6}); M.inoxBrushed=std({...brushed,roughness:.32,metalness:.85});
   M.mirror=std({color:0xe8eef2,metalness:1,roughness:.04,envMapIntensity:1.2});
   M.yellowPaint=std({color:0xf2c62a,roughness:.85}); M.stoolBlue=std({color:0x2f80d8,roughness:.5});
   M.blueSteel=std({color:0x1f5fc0,metalness:.4,roughness:.45});
@@ -148,6 +149,16 @@ export function makeMaterials(aniso,envRef){
   M.towerBeige=fac([226,214,180],[62,74,86],[210,200,170]); for(const k of ['map','normalMap','roughnessMap']) if(M.towerBeige[k]) M.towerBeige[k].repeat.set(1/6.6,1/11.1);
   const tg=genTex(512,(u,v)=>{ const c=(u*8)%1,r=(v*4)%1,fr=c<.05||r<.04; const lit=hash(Math.floor(u*8),Math.floor(v*4),111); return fr?{c:[58,68,82],h:1,r:.4}:{c:[46+lit*12,86+lit*16,142+lit*20],h:0,r:.05}; },8,{normal:1,rough:1}); M.towerGlass=std({...tg,roughness:1,metalness:.6,envMapIntensity:1.5});
   M.roofTop=std({color:0x8f8d86,roughness:.95});
+  // Gỗ mật ong của bàn ghế phòng hội đồng, da đen bọc ghế, khăn trải bàn, rèm vải
+  M.woodHoney=std({...wood,color:0xffc488,roughness:.42}); M.woodHoneyDark=std({...wood,color:0xd99a5c,roughness:.5});
+  M.chairWood=std({...wood,color:0xf3d2a8,roughness:.55}); M.platform=std({...wood,color:0xd8b48a,roughness:.5});
+  M.leather=std({color:0x16171a,roughness:.42,metalness:.05});
+  const cloth=genTex(256,(u,v)=>{ const n=fbm(u,v,40,2,171); return {c:[246,246,244],h:n*.4+Math.sin(v*Math.PI*2*6)*.15,r:.95}; },.8,{normal:.8}); M.cloth=std({...cloth,roughness:.95});
+  const cur=genTex(256,(u,v)=>{ const f=Math.sin(u*Math.PI*2*5)*.5+.5,k=.88+f*.12; return {c:[150*k,196*k,226*k],h:f,r:.9}; },.5,{normal:4}); M.curtain=std({...cur,roughness:.95,side:THREE.DoubleSide});
+  M.chalk=std({color:0xf4f2ea,roughness:.9}); M.bagBlue=std({color:0x2b4f8c,roughness:.75}); M.bin=std({color:0x2f8a4e,roughness:.5}); M.broom=std({color:0xc9a35a,roughness:.95});
+  M.yellowFlower=std({color:0xf5c21f,roughness:.8}); M.bottleCap=std({color:0x1f6fd1,roughness:.5});
+  M.acGrille=std({color:0xb9bcbf,roughness:.6}); M.cove=std({color:0xb88cff,emissive:0xa27bff,emissiveIntensity:1.6},{noCast:true});
+  M.glassGreen=new THREE.MeshStandardMaterial({color:0x2f5a45,roughness:.05,metalness:.25,transparent:true,opacity:.55,envMapIntensity:1.4,depthWrite:false,side:THREE.DoubleSide}); M.glassGreen.userData={noCast:true,noAO:true};
   return M;
 }
 

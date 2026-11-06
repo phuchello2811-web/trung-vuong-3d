@@ -4,6 +4,16 @@ export { lattice as latticeDiamond };
 import { frameM } from './builder.js';
 
 const LV=[1,2,3,4,5];
+// Cửa thang máy inox: khung bao, hai cánh lùa có khe giữa, bảng nút gọi bên cạnh, số tầng phía trên
+// Vẽ trong khung cục bộ: cửa nằm trên mặt z = z0, rộng từ x0 đến x1, mặt quay về +z
+function liftDoor(b,x0,x1,y,z0){
+  const w=x1-x0,c=(x0+x1)/2,h=2.1;
+  b.box('alu',x0-.12,x0,y,y+h+.12,z0,z0+.05); b.box('alu',x1,x1+.12,y,y+h+.12,z0,z0+.05); b.box('alu',x0-.12,x1+.12,y+h,y+h+.12,z0,z0+.05);
+  b.box('inoxBrushed',x0,c-.006,y,y+h,z0,z0+.025); b.box('inoxBrushed',c+.006,x1,y,y+h,z0,z0+.025); b.box('plasticDark',c-.006,c+.006,y,y+h,z0,z0+.02);
+  b.box('alu',x0-.12,x1+.12,y,y+.015,z0,z0+.09);
+  b.box('plasticDark',x1+.22,x1+.34,y+1.0,y+1.32,z0,z0+.03); b.cyl('lamp',x1+.28,z0+.035,y+1.1,y+1.12,.025,{seg:10}); b.cyl('lamp',x1+.28,z0+.035,y+1.2,y+1.22,.025,{seg:10});
+  b.box('plasticDark',c-.2,c+.2,y+h+.2,y+h+.34,z0,z0+.03);
+}
 
 // Ô gạch hoa gió thật có chiều sâu: nhìn gần thấy lỗ thoáng, nắng lọt qua thành vệt bóng
 export function lattice(b,mat,w,h,d,cw=.2,ch=.25,ins=.022){
@@ -27,14 +37,20 @@ function framedPanel(b,M4,w,h,d=.12){
   b.setFrame(save);
 }
 
-function winFn(kind='win'){
+function winFnBase(kind='win'){
+  return winFnImpl(kind);
+}
+const winFn=k=>winFnImpl(k);
+function winFnImpl(kind='win'){
   return (b,s,e,y0,y1,c,alongX,t)=>{
     const F=.05,W=e-s,n=Math.max(1,Math.round(W/1.05));
     const bx=(a0,a1,yy0,yy1,tt)=>{ if(alongX) b.box('alu',a0,a1,yy0,yy1,c-tt,c+tt); else b.box('alu',c-tt,c+tt,yy0,yy1,a0,a1); };
     bx(s,e,y0,y0+F,.05); bx(s,e,y1-F,y1,.05); bx(s,s+F,y0,y1,.05); bx(e-F,e,y0,y1,.05);
     for(let i=1;i<n;i++){ const a=s+i*W/n; bx(a-.022,a+.022,y0,y1,.04); }
     if(y1-y0>1.5) bx(s,e,y1-.56,y1-.52,.04);
-    if(alongX){ b.box('glass',s,e,y0,y1,c-.006,c+.006); b.solid(s,e,y0,y1,c-.05,c+.05); } else { b.box('glass',c-.006,c+.006,y0,y1,s,e); b.solid(c-.05,c+.05,y0,y1,s,e); }
+    const gm=kind==='grille'?'glassGreen':'glass';
+    if(kind==='grille') for(let y=y0+.12;y<y1-.06;y+=.115){ if(alongX) b.box('white',s,e,y-.012,y+.012,c+.03,c+.055); else b.box('white',c+.03,c+.055,y-.012,y+.012,s,e); if(alongX) b.box('white',s,e,y-.012,y+.012,c-.055,c-.03); else b.box('white',c-.055,c-.03,y-.012,y+.012,s,e); }
+    if(alongX){ b.box(gm,s,e,y0,y1,c-.006,c+.006); b.solid(s,e,y0,y1,c-.05,c+.05); } else { b.box(gm,c-.006,c+.006,y0,y1,s,e); b.solid(c-.05,c+.05,y0,y1,s,e); }
   };
 }
 function doorFn(sign){
@@ -69,7 +85,7 @@ function floorOutside(r,side,t){
 }
 export const DOOR_FIXES=[];
 function roomOpenings(r,side,len){
-  const O=[]; const dsign={Qmax:1,Qmin:-1,Pmax:-1,Pmin:1}[side];
+  const O=[]; const winFn=(k)=>winFnBase(r.kind==='hall'?'grille':k); const dsign={Qmax:1,Qmin:-1,Pmax:-1,Pmin:1}[side];
   if(side===r.door){
     const big=['class','lab','comp','lib','hall'].includes(r.kind);
     if(r.kind==='wc'){ const cx=Math.min(1.1,len/2-.8); O.push({s:cx,e:cx+1.5,h0:0,h1:2.45,fn:doorFn(dsign)});
@@ -112,6 +128,9 @@ function buildRoomWalls(b){
 }
 
 function buildOuterWalls(b){
+  // Tường ngoài đoạn nối khối Tây – khối Bắc (P 691–716,5) phía Tây, có ô gạch thông gió
+  for(const L of [2,3,4,5]){ const y0=Y[L],y1=(L<5?Y[L+1]:Y[6])-.18;
+    b.wall('plaster',X(57),Z(716.5),X(57),Z(691),y0,y1,.2,[{s:.5,e:M(25.5)-.5,h0:1.2,h1:3,fn:breezeFn()}]); }
   for(const L of [2,3,4,5]){ const y0=Y[L],y1=(L<5?Y[L+1]:Y[6])-.18,Ps=L===2?237:224;
     b.wall('plaster',X(127),Z(303),X(212),Z(303),y0,y1,.3,[{s:2.4,e:M(85)-2.4,h0:1.2,h1:3,fn:breezeFn()}]);
     b.wall('plaster',X(212),Z(303),X(212),Z(303),y0,y1,.3);
@@ -188,6 +207,10 @@ function uStair(b,frame,o){
     if(zL>.01){ const yt=yOf(l+1); b.box('floor',0,W,yt-.012,yt,0,zL,{faces:'xXYzZ'}); b.box('ceil',0,W,yt-.18,yt-.012,0,zL,{faces:'xXyzZ'}); b.solid(0,W,yt-.18,yt,0,zL); }
   }
   if(zL>.01){ const yt=yOf(levels[0]); if(yt>.5){ b.box('floor',0,W,yt-.012,yt,0,zL,{faces:'xXYzZ'}); } }
+  // Lan can chắn ngang giếng thang (khoảng trống giữa hai vế) ở mép chiếu nghỉ của mọi tầng
+  { const mx=fw+.11,nx=W-fw-.11; if(nx-mx>.08) for(const l of [...levels,levels[levels.length-1]+1]){ const yt=yOf(l); if(yt<.5) continue;
+      const n=Math.max(2,Math.round((nx-mx)/.12)); for(let i=0;i<=n;i++){ const x=mx+(nx-mx)*i/n; b.box('steel',x-.009,x+.009,yt,yt+1.05,zL+.02,zL+.04,{faces:'xXzZ'}); }
+      b.rod('steel',[mx,yt+1.07,zL+.03],[nx,yt+1.07,zL+.03],.024,6); b.solid(mx,nx,yt,yt+2.4,zL-.02,zL+.08); } }
   // Tầng trên cùng: nhánh A không còn bản thang đi lên nên khoang thang hở, chắn lan can quanh khoang
   { const yt=yOf(levels[levels.length-1]+1),x1=fw+.11,n=Math.round(x1/.12);
     for(let i=0;i<=n;i++){ const x=i/n*x1; b.box('steel',x-.009,x+.009,yt,yt+1.05,zL+.02,zL+.04,{faces:'xXzZ'}); }
@@ -204,7 +227,7 @@ function buildStairs(b,extras){
   uStair(b,f1,{W:M(66),fw:M(22),zL:0,zF:2.8,ld:M(47)-2.8,levels:[1,2,3,4,5],yOf,mid:false});
   // thang máy
   b.boxPQ('darkTile',562.5,583.5,127-M(0)-27,127,0,Y[6]+2.6,{collide:true});
-  for(const L of LV){ b.boxPQ('inox',567,579,127,127.25,Y[L],Y[L]+2.2); }
+  { const f=frameM(573,127,1,0,0,1); const sv=b.m; b.setFrame(f); for(const L of LV) liftDoor(b,-M(6),M(6),Y[L],.01); b.setFrame(sv); }
   // tường sau và buồng thang mái
   for(const L of LV) b.wall('plaster',X(80),Z(606),X(80),Z(540),Y[L],Y[L+1]-.18,.2,[{s:1.8,e:M(66)-1.8,h0:1.3,h1:3.1,fn:breezeFn()}]);
   b.boxPQ('plaster',534,540,57,127,Y[6]-.2,Y[6]+2.9,{collide:true});
@@ -233,12 +256,14 @@ function buildStairs(b,extras){
   }
   // thang máy chéo
   b.box('darkTile',f3W+.1,f3W+2.6,0,Y[6]+2.2,.2,2.8,{collide:true});
-  for(const L of LV){ b.box('inox',f3W+.75,f3W+1.95,Y[L],Y[L]+2.2,.17,.2); }
+  for(const L of LV){ const sv=b.m; b.setFrame(sv.clone().multiply(new THREE.Matrix4().makeRotationY(Math.PI).setPosition(2*f3W+2.7,0,.4))); liftDoor(b,f3W+.75,f3W+1.95,Y[L],.2); b.setFrame(sv); }
   // lõi cột dưới
   b.setFrame(s);
   // khối đặc phía nam đầu đường chéo, tầng 2 trở lên
   const mass=[[363,433],[397,433],[399.5,471.8],[386,479]].map(p=>[X(p[1]),Z(p[0])]);
   b.prism('plaster',mass,Y[2]-.5,Y[6],{collide:true});
+  // tường chắn mái quanh khối đặc, mái này đi lên được từ sân thượng
+  for(let i=0;i<mass.length;i++){ const A=mass[i],B=mass[(i+1)%mass.length],dx=B[0]-A[0],dz=B[1]-A[1],L=Math.hypot(dx,dz),fr=new THREE.Matrix4().makeBasis(new THREE.Vector3(dx/L,0,dz/L),new THREE.Vector3(0,1,0),new THREE.Vector3(-dz/L,0,dx/L)).setPosition(A[0],0,A[1]); const sv=b.m; b.setFrame(fr); b.box('plaster',-.12,L+.12,Y[6],Y[6]+.9,-.12,.12,{collide:true}); b.setFrame(sv); }
   // S4: cầu thang khán đài sân đa năng, từ sân lên tầng 2
   const Qa=358,Qb=424,Pa=325,Pb=397; const nS=24,ry=(Y[2])/nS,rq=(Qb-Qa)/nS;
   for(let i=0;i<nS;i++){ const q0=Qa+i*rq,yy=i*ry; const mat=(i%3===2)?'stepBlue':'stepBlue';
