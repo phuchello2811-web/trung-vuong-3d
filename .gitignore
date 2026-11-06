@@ -1,0 +1,7 @@
+node_modules/
+tools/out/
+.DS_Store
+
+# Ảnh tham khảo chỉ giữ trên máy: ảnh có học sinh và bản vẽ có bản quyền
+reference/*
+!reference/README.md

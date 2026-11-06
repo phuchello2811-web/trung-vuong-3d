@@ -1,0 +1,27 @@
+{
+  "name": "trung_vuong_3d",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "node tools/dev.mjs",
+    "build": "node tools/build.mjs --min",
+    "test": "node tools/walktest.mjs && node tools/uitest.mjs",
+    "test:walk": "node tools/walktest.mjs",
+    "test:ui": "node tools/uitest.mjs",
+    "shot": "node tools/shot.mjs",
+    "shot:phone": "node tools/phone.mjs",
+    "perf": "node tools/perf.mjs",
+    "osm": "node tools/fetch_osm.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Mô hình 3D Trường THCS Trưng Vương, Đà Nẵng (Three.js)",
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "puppeteer-core": "^25.16.0",
+    "three": "^0.158.0",
+    "three-mesh-bvh": "^0.6.8",
+    "three160": "npm:three@^0.160.0"
+  },
+  "type": "module"
+}
