@@ -123,14 +123,41 @@ function hall(b,r){
     b.solid(x-.21,x+.21,0,.92,z-.2,z+.22);
   };
   for(const x of [W*.32,W*.5,W*.68]) chair(x,.95);
-  const ax=W*.5;
-  for(let z=3.7;z<D-.85;z+=1.05) for(let x=.85;x<W-.6;x+=.78){ if(Math.abs(x-ax)<.52) continue; chair(x,z); }
+  const ax=W*.5, cols=[[W*.5,D*.42],[W*.5,D*.76]];
+  for(const [cx,cz] of cols) b.cyl('plaster',cx,cz,0,h,.34,{seg:24,collide:true,caps:false});   // cột tròn giữa phòng (ảnh phòng hội đồng)
+  for(let z=3.7;z<D-.85;z+=1.05) for(let x=.85;x<W-.6;x+=.78){ if(Math.abs(x-ax)<.52) continue; if(cols.some(([cx,cz])=>Math.hypot(x-cx,z-cz)<.8)) continue; chair(x,z); }
   // Đèn tuýp, máy lạnh cassette âm trần, quạt trần như ảnh
   for(const a of [.22,.5,.78]) for(let f=.1;f<1;f+=.16) tube(b,W*a,h,D*f);
   for(const a of [.3,.7]) for(let f=.2;f<1;f+=.27){ const cx=W*a,cz=D*f; b.box('white',cx-.42,cx+.42,h-.09,h,cz-.42,cz+.42,{faces:'y'}); b.box('alu',cx-.44,cx+.44,h-.12,h-.09,cz-.44,cz+.44,{faces:'xXyzZ'}); b.box('plasticDark',cx-.13,cx+.13,h-.1,h-.08,cz-.13,cz+.13,{faces:'y'}); }
   for(const a of [.2,.8]) for(const f of [.3,.66]) fan(b,W*a,h,D*f);
   b.setFrame(s);
 }
+
+// Phòng Công nghệ – STEM (ảnh): tường vàng, kệ tổ ong trắng, bàn hình thang ghép lục giác, ghế đôn xanh
+function stem(b,r){
+  const {m,W,D}=roomFrame(r,r.board||'Qmax'); const h=(r.L<5?Y[r.L+1]:Y[6])-.18-Y[r.L]; const s=b.m; b.setFrame(m);
+  b.box('yellowPaint',.1,W-.1,0,h,.1,.115,{faces:'Z'});
+  const hex=(cx,cy,R)=>{ for(let k=0;k<6;k++){ const a0=k/6*Math.PI*2,a1=(k+1)/6*Math.PI*2,x0=cx+Math.cos(a0)*R,y0=cy+Math.sin(a0)*R,x1=cx+Math.cos(a1)*R,y1=cy+Math.sin(a1)*R,L=Math.hypot(x1-x0,y1-y0),an=Math.atan2(y1-y0,x1-x0);
+    const sv=b.m; b.setFrame(sv.clone().multiply(new THREE.Matrix4().makeRotationZ(an).setPosition((x0+x1)/2,(y0+y1)/2,.12))); b.box('white',-L/2-.012,L/2+.012,-.014,.014,0,.24); b.setFrame(sv); } };
+  const hr=.28,hw=hr*Math.sqrt(3);
+  for(const [i,j] of [[0,0],[1,0],[2,0],[3,0],[.5,1],[1.5,1],[2.5,1],[1,2],[2,2],[1.5,-1]]) hex(W*.5-1.6+i*hw*1.0+ (j%2?0:0),h-.75-j*hr*1.5,hr);
+  b.box('white',W*.08,W*.08+.3,1.1,2.6,.12,.42); for(let y=1.1;y<2.7;y+=.37) b.box('white',W*.08,W*.08+.3,y,y+.02,.12,.42);
+  const tbl=(x,z,flip)=>{ const sv=b.m; b.setFrame(sv.clone().multiply(new THREE.Matrix4().makeRotationY(flip?Math.PI:0).setPosition(x,0,z)));
+    b.prism('white',[[-.62,0],[.62,0],[.31,.54],[-.31,.54]],.715,.745,{collide:true});
+    for(const [lx,lz] of [[-.55,.03],[.55,.03],[-.26,.5],[.26,.5]]) b.box('deskFrame',lx-.018,lx+.018,0,.715,lz-.018,lz+.018,{faces:'xXzZ'});
+    b.setFrame(sv); };
+  const stool=(x,z)=>{ b.cyl('stoolBlue',x,z,.44,.47,.17,{seg:14}); for(let k=0;k<4;k++){ const a=k*Math.PI/2+.6; b.rod('deskFrame',[x+Math.cos(a)*.1,.44,z+Math.sin(a)*.1],[x+Math.cos(a)*.17,0,z+Math.sin(a)*.17],.011,4); } b.solid(x-.18,x+.18,0,.47,z-.18,z+.18); };
+  for(const [cx,cz] of [[W*.3,D*.36],[W*.7,D*.36],[W*.3,D*.68],[W*.7,D*.68]]){ tbl(cx,cz,false); tbl(cx,cz,true);
+    for(let k=0;k<6;k++){ const a=k/6*Math.PI*2+Math.PI/6; stool(cx+Math.cos(a)*.95,cz+Math.sin(a)*.95); } }
+  // bàn thao tác sát tường sau: máy in 3D, hộp linh kiện, kệ vật liệu
+  b.box('wood',.3,W-.3,.86,.9,D-.85,D-.15,{collide:true}); b.box('deskFrame',.3,W-.3,0,.86,D-.8,D-.2);
+  b.box('white',W*.2-.25,W*.2+.25,.9,1.42,D-.7,D-.25); b.box('screen',W*.2-.2,W*.2+.2,1.0,1.36,D-.701,D-.7,{faces:'z'});
+  for(let i=0;i<6;i++){ const x=W*.4+i*.42; b.box(i%2?'stoolBlue':'courtRed',x-.17,x+.17,.9,1.04,D-.6,D-.32); }
+  shelf(b,W-1.9,W-.3,D-.14-.45,D-.14,2.1,'alu',false);
+  for(const a of [.25,.5,.75]) for(const f of [.2,.5,.8]) tube(b,W*a,h,D*f);
+  b.setFrame(s);
+}
+export { roomFrame };
 
 export function buildInteriors(b){
   for(const r of ROOMS){
@@ -142,6 +169,7 @@ export function buildInteriors(b){
     else if(r.kind==='wc') wc(b,r);
     else if(r.kind==='lib') library(b,r);
     else if(r.kind==='hall') hall(b,r,'slogan');
+    else if(r.kind==='stem') stem(b,r);
   }
   // Đèn trần hành lang
   for(const L of [1,2,3,4,5]){ const h=(L<5?Y[L+1]:Y[6])-.18;

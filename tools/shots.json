@@ -1,1 +1,8 @@
-[{"name":"check","view":2}]
+[{"name":"v_hero","orbit":[1.85,1.12,86],"h":9.5},
+ {"name":"v_under_bridge","view":3,"h":9.5},
+ {"name":"v_on_bridge","view":4},
+ {"name":"v_letters","p":[-3.2,1.65,-10.4],"y":1.57,"x":0.16},
+ {"name":"v_statue","p":[0.2,1.65,-7.2],"y":1.4,"x":0.3},
+ {"name":"v_stele","p":[-6.6,1.6,-2.4],"y":1.62,"x":-0.05},
+ {"name":"v_stem","p":[9.2,17.5,-28.5],"y":-1.57,"x":-0.08},
+ {"name":"v_atrium","view":9}]

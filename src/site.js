@@ -42,28 +42,39 @@ function statueSDF(x,y,z){
   d=smin(d,capsule(x,y,z,[-.9,1.25,0],[-1.02,.65,0],.04,.03),.04);
   // yên và tấm phủ lưng
   d=smin(d,ell(x,y,z,[-.05,1.88,0],[.55,.22,.5]),.06);
-  // Hai Bà đứng trên lưng voi, áo dài rộng tà
-  const fig=(ox,oz,armUp)=>{ let f=capsule(x,y,z,[ox,1.98,oz],[ox,2.58,oz],.33,.17);
-    f=smin(f,capsule(x,y,z,[ox,2.58,oz],[ox,3.0,oz],.17,.155),.07);
-    f=smin(f,ell(x,y,z,[ox,3.24,oz],[.13,.155,.13]),.05);
-    f=smin(f,ell(x,y,z,[ox-.02,3.36,oz],[.16,.085,.16]),.03);
-    f=smin(f,capsule(x,y,z,[ox,2.96,oz+.2],[ox+.22,2.58,oz+.24],.06,.045),.05);
-    if(armUp) f=smin(f,capsule(x,y,z,[ox,2.96,oz-.2],[ox+.06,3.68,oz-.25],.06,.045),.05);
-    else f=smin(f,capsule(x,y,z,[ox,2.96,oz-.2],[ox+.46,2.84,oz-.3],.06,.045),.05);
+  // tấm phủ lưng chạm hoa văn và mũ đầu voi
+  d=smin(d,Math.max(ell(x,y,z,[-.05,1.6,0],[.64,.52,.66]),1.1-y),.05);
+  d=smin(d,ell(x,y,z,[1.02,1.78,0],[.2,.14,.34]),.06);
+  // Hai Bà đứng trên lưng voi (ảnh tượng): áo dài xoè tà, khăn vấn; bà trước chỉ tay về phía trước, bà sau cầm cờ
+  const fig=(ox,oz,kind)=>{
+    let f=capsule(x,y,z,[ox,1.98,oz],[ox,2.78,oz],.37,.2);
+    f=smin(f,capsule(x,y,z,[ox,2.78,oz],[ox,3.28,oz],.2,.165),.08);
+    f=smin(f,ell(x,y,z,[ox+.04,3.18,oz],[.13,.11,.18]),.04);
+    f=smin(f,capsule(x,y,z,[ox,3.3,oz],[ox,3.43,oz],.068,.06),.03);
+    f=smin(f,ell(x,y,z,[ox+.01,3.57,oz],[.115,.148,.115]),.04);
+    f=smin(f,ell(x,y,z,[ox-.01,3.67,oz],[.152,.068,.152]),.03);
+    f=smin(f,ell(x,y,z,[ox-.01,3.745,oz],[.09,.045,.09]),.02);
+    if(kind==='point'){
+      f=smin(f,capsule(x,y,z,[ox,3.24,oz-.2],[ox+.42,3.42,oz-.34],.056,.046),.04);
+      f=smin(f,capsule(x,y,z,[ox+.42,3.42,oz-.34],[ox+.8,3.52,oz-.42],.046,.034),.03);
+      f=smin(f,capsule(x,y,z,[ox,3.22,oz+.2],[ox+.2,2.88,oz+.3],.056,.045),.04);
+    } else {
+      f=smin(f,capsule(x,y,z,[ox,3.24,oz-.2],[ox+.02,3.62,oz-.32],.056,.045),.04);
+      f=smin(f,capsule(x,y,z,[ox,3.22,oz+.2],[ox+.2,2.92,oz+.26],.056,.045),.04);
+    }
     return f; };
-  d=Math.min(d,fig(.3,.06,false));
-  d=Math.min(d,fig(-.36,-.06,true));
-  // cán cờ và lá cờ khối
-  const pole=capsule(x,y,z,[-.3,2.2,-.31],[-.3,4.5,-.31],.026);
-  d=Math.min(d,pole);
-  const flagS=Math.max(Math.abs(y-4.1)-.36,Math.abs(x-(-.76))-.46,Math.abs(z+.31-Math.sin(x*3)*.08)-.03);
+  d=Math.min(d,fig(.32,.08,'point'));
+  d=Math.min(d,fig(-.34,-.08,'flag'));
+  d=Math.min(d,capsule(x,y,z,[.05,2.88,.38],[.98,2.94,.34],.019,.012));      // thanh kiếm
+  d=Math.min(d,capsule(x,y,z,[-.32,2.4,-.4],[-.32,5.05,-.4],.026));          // cán cờ
+  const flagS=Math.max(Math.abs(y-4.68)-.36,Math.abs(x-(-.82))-.5,Math.abs(z+.4-Math.sin(x*3.2)*.09)-.03);
   d=Math.min(d,flagS);
   return d;
 }
 
 export function buildStatue(b){
   const cx=X(STATUE[1]),cz=Z(STATUE[0]);
-  const g=surfaceNets(statueSDF,[-1.4,.0,-1.05],[1.9,4.6,1.05],.032);
+  const g=surfaceNets(statueSDF,[-1.42,.0,-1.05],[1.95,5.2,1.05],.03);
   // bệ
   const y0=0;
   b.prism('statueBase',ellipse(cx,cz+.8,1.75,3.2,36),y0,.18,{collide:true});
@@ -71,21 +82,29 @@ export function buildStatue(b){
   b.box('statueBase',cx-1.2,cx+1.2,.36,.76,cz-1.2,cz+1.2,{collide:true});
   b.box('statueBase',cx-.92,cx+.92,.76,1.7,cz-.92,cz+.92,{collide:true});
   b.box('statueBase',cx-1.02,cx+1.02,1.7,1.84,cz-1.02,cz+1.02);
-  const m=new THREE.Matrix4().compose(new THREE.Vector3(cx,1.84-.08,cz),new THREE.Quaternion(),new THREE.Vector3(1.08,1.08,1.08));
+  const m=new THREE.Matrix4().compose(new THREE.Vector3(cx,1.84-.08,cz),new THREE.Quaternion(),new THREE.Vector3(1.12,1.12,1.12));
   b.add('statue',g,m);
   // Cột cờ trong vòng bệ
   const fx=X(FLAG[1]),fz=Z(FLAG[0]);
   b.prism('statueBase',ellipse(fx,fz,.8,.8,24),.0,.3,{collide:true});
   b.cyl('flagPole',fx,fz,.3,16,.07,{r1:.035,seg:16,collide:true});
   b.cyl('flagPole',fx,fz,16,16.12,.07,{seg:12});
-  // Chậu cây cảnh và bia đá cạnh tượng
+  // Chậu cây cảnh cạnh tượng
   b.cyl('statueBase',cx-.2,cz+2.5,.36,.72,.3,{r1:.42,seg:18});
+  // Bia đá trắng "Tôn Sư Trọng Đạo" trong bãi cỏ trước khối Tây (ảnh sân)
+  { const sx=X(200),sz=Z(505),w=.36,h=1.75,sh=new THREE.Shape();
+    sh.moveTo(-w,0); sh.lineTo(w,0); sh.lineTo(w*.92,h-.3); sh.quadraticCurveTo(w*.6,h+.05,0,h); sh.quadraticCurveTo(-w*.7,h+.02,-w*.95,h-.35); sh.lineTo(-w,0);
+    const g2=new THREE.ExtrudeGeometry(sh,{depth:.3,bevelEnabled:true,bevelThickness:.04,bevelSize:.035,bevelSegments:3,curveSegments:10}); g2.translate(0,0,-.15);
+    b.add('stele',g2,new THREE.Matrix4().makeRotationY(Math.PI/2).setPosition(sx,.2,sz)); g2.dispose();
+    b.poly('steleText',[[sx+.2,.45,sz+.2],[sx+.2,.45,sz-.2],[sx+.2,1.75,sz-.2],[sx+.2,1.75,sz+.2]],[1,0,0],[[0,0],[1,0],[1,1],[0,1]]);
+    b.box('statueBase',sx-.34,sx+.34,0,.2,sz-.52,sz+.52,{collide:true}); b.solid(sx-.22,sx+.22,0,2.1,sz-.42,sz+.42); }
   return {fx,fz};
 }
 function ellipse(cx,cz,rx,rz,n){ const p=[]; for(let i=0;i<n;i++){ const a=i/n*Math.PI*2; p.push([cx+Math.cos(a)*rx,cz+Math.sin(a)*rz]); } return p; }
 
 function catmull(pts,sub=6){ const out=[],n=pts.length; for(let i=0;i<n;i++){ const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n]; for(let k=0;k<sub;k++){ const t=k/sub,t2=t*t,t3=t2*t; out.push([.5*(2*p1[0]+(p2[0]-p0[0])*t+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2+(3*p1[0]-p0[0]-3*p2[0]+p3[0])*t3),.5*(2*p1[1]+(p2[1]-p0[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(3*p1[1]-p0[1]-3*p2[1]+p3[1])*t3)]); } } return out; }
 
+export const STELE_PQ=[505,200];
 export function buildGardens(b){
   const shrubs=[];
   const placeIn=(pts,den)=>{ // rải bụi trong đa giác (x,z)
@@ -99,7 +118,8 @@ export function buildGardens(b){
     placeIn(s,.62);
   }
   for(const [p,q,r] of ROUND_BEDS){ const R=M(r),c=ellipse(X(q),Z(p),R,R,28); b.prism('concrete',c,0,.3,{noBottom:true,noTop:true,collide:true}); b.prism('grass',c,0,.28,{noBottom:true,noSide:true}); placeIn(c,.42); }
-  return shrubs;
+  const sx=X(STELE_PQ[1]),sz=Z(STELE_PQ[0]);
+  return shrubs.filter(p=>Math.hypot(p[0]-sx,p[2]-sz)>.9);
 }
 
 function pier(b,p,q,h=2.6){ const x=X(q),z=Z(p); b.box('plaster',x-.22,x+.22,0,h,z-.22,z+.22,{collide:true}); b.box('white',x-.27,x+.27,h,h+.07,z-.27,z+.27); }

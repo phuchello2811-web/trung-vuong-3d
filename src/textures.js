@@ -49,7 +49,7 @@ export function makeMaterials(aniso,envRef){
   const paint=genTex(512,(u,v)=>{ const N=fbm(u,v,5,4,3),k=.975+(N-.5)*.04; return {c:[226*k,224*k,216*k],h:fbm(u,v,64,2,4)*.2}; },2,{normal:.8});
   M.paint=std({...paint,roughness:.9}); M.ceil=std({...paint,roughness:.95,color:0xfbfbf7});
   // Khảm gốm cột tròn: viên 10 cm, ron sẫm (ảnh chi tiết cột)
-  const mosaic=genTex(1024,tilesFn(10,10,.0045,[226,214,186],[66,60,52],{vary:.12,grain:.05,rough:.32,bev:1}),1,{normal:2.2,rough:1});
+  const mosaic=genTex(1024,tilesFn(20,20,.0055,[236,236,231],[176,176,171],{vary:.035,grain:.03,rough:.24,bev:1}),1,{normal:1.6,rough:1});
   M.mosaic=std({...mosaic,roughness:1});
   const darkTile=genTex(1024,tilesFn(6,12,.003,[92,94,98],[48,48,50],{bond:1,vary:.2,rough:.45,bev:1}),1.2,{normal:2,rough:1});
   M.darkTile=std({...darkTile,roughness:1});
@@ -62,7 +62,7 @@ export function makeMaterials(aniso,envRef){
   const wcFloor=genTex(1024,tilesFn(4,4,.0018,[132,134,134],[86,86,86],{vary:.06,grain:.09,rough:.42}),2.4,{normal:.6,rough:1});
   M.wcFloor=std({...wcFloor,roughness:1});
   // Gạch lát sân: viên 30x15 xám, xen độ đậm nhạt
-  const paver=genTex(1024,tilesFn(4,8,.0022,[150,147,139],[108,105,98],{bond:1,vary:.08,grain:.1,rough:.86,bev:1}),2.4,{normal:1.4,rough:1});
+  const paver=genTex(1024,tilesFn(2,4,.0016,[170,168,162],[128,126,120],{bond:1,vary:.05,grain:.1,rough:.86,bev:1}),2.4,{normal:1.4,rough:1});
   M.paver=std({...paver,roughness:1});
   const concrete=genTex(1024,(u,v)=>{ const N=fbm(u,v,4,6,21),n=fbm(u,v,90,2,22),k=.95+(N-.5)*.1+(n-.5)*.08; return {c:[160*k,157*k,149*k],h:n*.3,r:.9}; },4,{normal:1.2});
   M.concrete=std({...concrete,roughness:.95});
@@ -87,6 +87,32 @@ export function makeMaterials(aniso,envRef){
   // Gạch hoa gió đất nung
   const terra=genTex(512,(u,v)=>{ const n=fbm(u,v,14,4,81),b=fbm(u,v,2,3,83),k=.9+(n-.5)*.34+(b-.5)*.2; return {c:[172*k,112*k,78*k],h:n,r:.9}; },.6,{normal:1.6});
   M.terra=std({...terra,roughness:.95,side:THREE.DoubleSide});
+  { // 1 m x 1 m: 8 cột x 6 hàng viên, mỗi viên một khe đứng, hàng so le nửa viên
+    const N=512,c=makeCanvas(N),g=c.getContext('2d'),im=g.createImageData(N,N),hgt=new Float32Array(N*N);
+    for(let y=0;y<N;y++) for(let x=0;x<N;x++){ const row=Math.floor(y/N*6),fy=(y/N*6)%1,sh=row%2?.5:0,cx=(x/N*8+sh)%8,col=Math.floor(cx),fx=cx%1;
+      const slot=fx>.36&&fx<.64&&fy>.14&&fy<.86, i=(y*N+x)*4, n=fbm(x/N,y/N,16,3,140), v=hash(col,row,141);
+      const k=.9+(v-.5)*.12+(n-.5)*.14;
+      im.data[i]=206*k; im.data[i+1]=172*k; im.data[i+2]=134*k; im.data[i+3]=slot?0:255;
+      const e=Math.min(Math.abs(fx-.36),Math.abs(fx-.64),Math.abs(fy-.14),Math.abs(fy-.86)); hgt[y*N+x]=slot?0:Math.min(1,e*14); }
+    g.putImageData(im,0,0);
+    const nc=makeCanvas(N),ng=nc.getContext('2d'),ni=ng.createImageData(N,N);
+    for(let y=0;y<N;y++) for(let x=0;x<N;x++){ const xp=(x+1)%N,xm=(x-1+N)%N,yp=(y+1)%N,ym=(y-1+N)%N,dx=(hgt[y*N+xp]-hgt[y*N+xm])*2.2,dy=(hgt[yp*N+x]-hgt[ym*N+x])*2.2,l=Math.hypot(dx,dy,1),i=(y*N+x)*4; ni.data[i]=(-dx/l*.5+.5)*255; ni.data[i+1]=(dy/l*.5+.5)*255; ni.data[i+2]=(1/l*.5+.5)*255; ni.data[i+3]=255; }
+    ng.putImageData(ni,0,0);
+    M.breezeSlot=new THREE.MeshStandardMaterial({map:tex(c,1,true),normalMap:tex(nc,1,false),alphaTest:.5,side:THREE.DoubleSide,roughness:.9});
+    M.breezeSlot.userData={};
+  }
+  // Đá granite xám cho bậc tam cấp lối vào chính
+  const granite=genTex(512,(u,v)=>{ const n=hash(Math.floor(u*512),Math.floor(v*512),151),m=fbm(u,v,6,3,152),k=.82+(m-.5)*.16+(n>.86?.3:n<.1?-.32:0); return {c:[150*k,150*k,152*k],h:n*.3,r:.35}; },1.2,{normal:.8});
+  M.granite=std({...granite,roughness:.42});
+  M.gold=std({color:0xd8a73a,metalness:.78,roughness:.3});
+  M.goldSide=std({color:0x9a7424,metalness:.7,roughness:.4});
+  // Mái che vải xanh xếp nếp trên lối vào chính
+  const val=genTex(512,(u,v)=>{ const w=Math.sin(u*Math.PI*2*24),k=.86+w*.12; return {c:[22*k,58*k,168*k],h:w*.5+.5,r:.7}; },2,{normal:3});
+  M.valance=std({...val,roughness:.75,side:THREE.DoubleSide});
+  M.stele=std({color:0xe9e6dd,roughness:.6});
+  M.yellowPaint=std({color:0xf2c62a,roughness:.85}); M.stoolBlue=std({color:0x2f80d8,roughness:.5});
+  M.blueSteel=std({color:0x1f5fc0,metalness:.4,roughness:.45});
+  M.pinkFlower=std({color:0xd94b8f,roughness:.8});
   M.white=std({color:0xdcdad3,roughness:.72}); M.awning2=std({color:0x5d8ad6,roughness:.55,side:THREE.DoubleSide}); M.alu=std({color:0xe9e8e4,roughness:.42,metalness:.28}); M.steel=std({color:0x1d2124,roughness:.5,metalness:.55}); M.inox=std({color:0xa8aaac,roughness:.32,metalness:.92});
   M.blueFascia=std({color:0x1b3f97,roughness:.45}); M.awning=std({color:0x1d4aa8,roughness:.55,side:THREE.DoubleSide});
   M.glass=new THREE.MeshStandardMaterial({color:0x54646d,roughness:.05,metalness:.2,transparent:true,opacity:.3,envMapIntensity:1.9,depthWrite:false,side:THREE.DoubleSide}); M.glass.userData={noCast:true,noAO:true};
@@ -139,12 +165,19 @@ export function broadLeafTexture(aniso){
     g.save(); g.translate(x,y); g.rotate(a); g.fillStyle=`rgb(${42+sh*46|0},${84+sh*56|0},${26+sh*16|0})`; g.beginPath(); g.moveTo(-l/2,0); g.quadraticCurveTo(0,-w,l/2,0); g.quadraticCurveTo(0,w,-l/2,0); g.fill(); g.strokeStyle='rgba(170,200,110,.42)'; g.lineWidth=1.2; g.beginPath(); g.moveTo(-l/2,0); g.lineTo(l/2,0); g.stroke(); g.restore(); }
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=Math.min(aniso,4); return t;
 }
+// Hoa giấy hồng trong bồn trên cầu (ảnh cầu dây leo)
+export function flowerTexture(aniso){
+  const size=512,c=makeCanvas(size),g=c.getContext('2d'); const R=(a,b)=>a+Math.random()*(b-a);
+  for(let k=0;k<90;k++){ const x=R(40,472),y=R(40,472),a=R(0,6.28),l=R(18,34),sh=R(0,1); g.save(); g.translate(x,y); g.rotate(a); g.fillStyle=`rgb(${60+sh*30|0},${110+sh*40|0},${36})`; g.beginPath(); g.ellipse(0,0,l/2,l/4,0,0,6.28); g.fill(); g.restore(); }
+  for(let k=0;k<70;k++){ const x=R(50,462),y=R(50,462); for(let p=0;p<3;p++){ const a=p/3*6.28+R(-.3,.3),r=R(9,14),sh=R(0,1); g.fillStyle=`rgb(${210+sh*35|0},${50+sh*40|0},${120+sh*40|0})`; g.beginPath(); g.ellipse(x+Math.cos(a)*r*.7,y+Math.sin(a)*r*.7,r,r*.75,a,0,6.28); g.fill(); } g.fillStyle='#f6f0c8'; g.beginPath(); g.arc(x,y,2.5,0,6.28); g.fill(); }
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=Math.min(aniso,4); return t;
+}
 // Dây leo rủ: sợi mảnh, lá nhỏ, có khoảng hở thấy xuyên qua
 export function vineTexture(aniso){
   const W=256,H=1024,c=makeCanvas(W,H),g=c.getContext('2d'); const R=(a,b)=>a+Math.random()*(b-a);
   for(let s=0;s<6;s++){ const x=20+s*43+R(-14,14),sh=R(0,1),wob=R(0,6.28),amp=R(5,16); g.strokeStyle='rgba(112,120,58,.95)'; g.lineWidth=1.5; g.beginPath(); g.moveTo(x,0);
     const pts=[]; for(let y=0;y<=H;y+=8){ const nx=x+Math.sin(y/H*6.283*2+wob)*amp; pts.push([nx,y]); g.lineTo(nx,y);} g.stroke();
-    for(const [px,py] of pts){ if(Math.random()<.9){ for(const sd of [-1,1]){ const l=R(16,30),w=l*.46,a=R(.7,1.55)*sd; g.save(); g.translate(px,py); g.rotate(a); const y=R(0,1)*sh; g.fillStyle=`rgb(${74+y*62|0},${124+y*48|0},${30+y*18|0})`; g.beginPath(); g.moveTo(0,0); g.quadraticCurveTo(l*.5,-w,l,0); g.quadraticCurveTo(l*.5,w,0,0); g.fill(); g.restore(); } } }
+    for(const [px,py] of pts){ if(Math.random()<.9){ for(const sd of [-1,1]){ const l=R(16,30),w=l*.46,a=R(.7,1.55)*sd; g.save(); g.translate(px,py); g.rotate(a); const y=R(0,1)*sh; g.fillStyle=`rgb(${104+y*70|0},${146+y*48|0},${40+y*26|0})`; g.beginPath(); g.moveTo(0,0); g.quadraticCurveTo(l*.5,-w,l,0); g.quadraticCurveTo(l*.5,w,0,0); g.fill(); g.restore(); } } }
   }
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=Math.min(aniso,4); t.wrapT=THREE.RepeatWrapping; return t;
 }

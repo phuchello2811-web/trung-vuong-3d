@@ -4,13 +4,17 @@
   "scripts": {
     "dev": "node tools/dev.mjs",
     "build": "node tools/build.mjs --min",
-    "test": "node tools/walktest.mjs && node tools/uitest.mjs",
+    "test": "node tools/walktest.mjs && node tools/uitest.mjs && node tools/gametest.mjs && node tools/pagestest.mjs",
     "test:walk": "node tools/walktest.mjs",
     "test:ui": "node tools/uitest.mjs",
     "shot": "node tools/shot.mjs",
     "shot:phone": "node tools/phone.mjs",
     "perf": "node tools/perf.mjs",
-    "osm": "node tools/fetch_osm.mjs"
+    "osm": "node tools/fetch_osm.mjs",
+    "test:game": "node tools/gametest.mjs",
+    "test:pages": "node tools/pagestest.mjs",
+    "letters": "node tools/make_letters.mjs",
+    "rules:deploy": "npx -y firebase-tools@13.29.1 deploy --only firestore:rules"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +22,8 @@
   "description": "Mô hình 3D Trường THCS Trưng Vương, Đà Nẵng (Three.js)",
   "dependencies": {
     "esbuild": "^0.28.2",
+    "firebase": "^10.12.2",
+    "opentype.js": "^1.3.4",
     "puppeteer-core": "^25.16.0",
     "three": "^0.158.0",
     "three-mesh-bvh": "^0.6.8",

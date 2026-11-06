@@ -1,6 +1,6 @@
 <title>Trường THCS Trưng Vương 3D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Dancing+Script:wght@700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Giao diện lấy màu từ biển trường: nền xanh đậm, chữ vàng. Lớp phủ gọn như khung tên bản vẽ để nhường chỗ cho cảnh 3D. */
 :root{ color-scheme:dark; --navy:#0e1c38; --panel:rgba(12,24,48,.78); --panel2:rgba(12,24,48,.92); --sign:#f4c63a; --paper:#eef1f5; --mute:#9fb0c8; --line:rgba(190,208,235,.22); --terra:#c07d50; --disp:"Be Vietnam Pro","Helvetica Neue",Arial,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace; }
@@ -14,8 +14,8 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 #stamp{position:fixed;left:max(16px,env(safe-area-inset-left,0px));top:calc(14px + env(safe-area-inset-top,0px));padding:10px 14px 10px;display:flex;gap:11px;align-items:center;max-width:min(340px,calc(100vw - 32px))}
 #stamp .txt{display:grid;gap:2px;min-width:0}
-.logo{width:42px;height:42px;flex:none}
-.logo.big{width:68px;height:68px}
+.logo{width:34px;height:44px;flex:none;object-fit:contain}
+.logo.big{width:62px;height:80px}
 #loadHead{display:flex;gap:14px;align-items:center}
 #stamp h1{margin:0;font-size:15px;line-height:1.25;font-weight:700;letter-spacing:.02em;color:var(--sign);text-wrap:balance}
 #stamp p{margin:0;font-size:12px;color:var(--paper);opacity:.85}
@@ -61,22 +61,94 @@ button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid 
 #stick{position:fixed;left:max(24px,env(safe-area-inset-left,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));width:110px;height:110px;border-radius:50%;border:1px solid var(--line);background:rgba(12,24,48,.35);touch-action:none}
 #stick i{position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(244,198,58,.7)}
 body.nohud .hud{display:none!important}
-@media (max-width:820px){ #views{display:none} #qual{display:none} #where{left:max(16px,env(safe-area-inset-left,0px));transform:none;top:calc(84px + env(safe-area-inset-top,0px));font-size:12px;padding:5px 10px;max-width:calc(100vw - 160px);white-space:normal} #where .mono{display:none} #sunInfo{display:none} #mapBox{top:calc(62px + env(safe-area-inset-top,0px));bottom:auto;width:112px;padding:5px} #stick{bottom:calc(112px + env(safe-area-inset-bottom,0px))} #map{width:100px;height:134px} #floors{grid-template-columns:repeat(3,1fr)} #hint{display:none} #stamp h1{font-size:13px} .logo{width:34px;height:34px} #stamp{max-width:calc(100vw - 110px)} #infoBtn{font-size:12px} #info{max-height:calc(100% - 180px)} }
+@media (max-width:820px){ #views{display:none} #qual{display:none} #where{left:max(16px,env(safe-area-inset-left,0px));transform:none;top:calc(84px + env(safe-area-inset-top,0px));font-size:12px;padding:5px 10px;max-width:calc(100vw - 160px);white-space:normal} #where .mono{display:none} #sunInfo{display:none} #mapBox{top:calc(62px + env(safe-area-inset-top,0px));bottom:auto;width:112px;padding:5px} #stick{bottom:calc(112px + env(safe-area-inset-bottom,0px))} #map{width:100px;height:134px} #floors{grid-template-columns:repeat(3,1fr)} #hint{display:none} #stamp h1{font-size:13px} .logo{width:28px;height:36px} #stamp{max-width:calc(100vw - 110px)} #infoBtn{font-size:12px} #info{max-height:calc(100% - 180px)} }
 @media (prefers-reduced-motion:reduce){ #pg i{transition:none} }
+/* ---- Menu khởi đầu và game ---- */
+body.mode-menu .hud,body.mode-menu .ghud,body.mode-menu #cross{display:none!important}
+body.mode-game .tour-only{display:none!important}
+body:not(.mode-game) .ghud{display:none!important}
+body.mode-game #hint{display:none!important}
+kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 5px;color:var(--sign)}
+.muted{color:var(--mute)}.small{font-size:12px}.big{font-size:16px;font-weight:600;line-height:1.45;margin:0 0 8px;text-wrap:balance}
+#menu{position:fixed;inset:0;z-index:6;display:flex;align-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px;background:linear-gradient(90deg,rgba(9,18,38,.92) 0%,rgba(9,18,38,.7) 36%,rgba(9,18,38,0) 64%);overflow:auto}
+.mcard{width:min(440px,100%);display:grid;gap:16px;margin-left:clamp(0px,4vw,56px)}
+.mhead{display:flex;gap:14px;align-items:center}
+.mhead h1{margin:0;font-size:clamp(24px,3.4vw,34px);line-height:1.1;color:var(--sign);text-wrap:balance}
+.mhead p{margin:4px 0 0;font-size:13px}
+.mbtns{display:grid;gap:10px}
+.mbig{display:grid;gap:3px;text-align:left;padding:14px 16px;border-radius:8px;border:1px solid var(--line);background:rgba(12,24,48,.72);transition:background .15s,border-color .15s}
+.mbig b{font-size:17px}.mbig span{font-size:13px;color:var(--mute)}
+.mbig:hover{border-color:var(--sign)}
+.mbig.gold{background:var(--sign);color:var(--navy);border-color:var(--sign)}.mbig.gold span{color:#3b3311}
+.macct{display:grid;gap:8px;padding:14px 16px;border-radius:8px;border:1px solid var(--line);background:rgba(12,24,48,.72)}
+.macct h2{margin:0;font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
+#acct{display:grid;gap:8px}#acct p{margin:0}
+.fld{display:grid;gap:3px;font-size:12px;color:var(--mute)}
+.fld input,.tin{font:inherit;font-size:14px;color:var(--paper);background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:5px;padding:8px 10px;min-width:0}
+.auf{display:grid;gap:8px}.err{color:#ff9b8f;margin:0;min-height:1em}
+.gb{font-weight:600;font-size:13px;padding:8px 13px;border-radius:5px;background:var(--sign);color:var(--navy);border:1px solid var(--sign);white-space:nowrap}
+.gb:hover{filter:brightness(1.06)}.gb:disabled{opacity:.4;cursor:not-allowed;filter:none}
+.gb.ghost{background:transparent;color:var(--paper);border-color:var(--line)}.gb.ghost:hover{border-color:var(--sign)}
+.gb.sm{padding:5px 10px;font-size:12px;justify-self:start}
+.gb.google{background:#fff;color:#1f1f1f;border-color:#fff}
+.linkb{color:var(--sign);text-decoration:underline;font-size:12px}
+.btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+#gHud{position:fixed;left:max(16px,env(safe-area-inset-left,0px));top:calc(14px + env(safe-area-inset-top,0px));display:flex;gap:11px;align-items:center;padding:10px 14px;max-width:min(360px,calc(100vw - 32px))}
+.gh{display:grid;gap:4px;min-width:0}.gnm{font-size:14px;color:var(--sign)}.gnm span{font-size:12px}
+.gst{display:flex;gap:12px;font-size:12px;flex-wrap:wrap}.gst b{color:var(--paper);font-size:14px}
+.gen{display:grid;gap:3px}.gen i{display:block;height:5px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;width:180px;max-width:100%}
+.gen i b{display:block;height:100%;background:#58c46e;transition:width .4s}.gen i b[data-low="1"]{background:#e66a4f}
+#gQuestBox{position:fixed;right:max(16px,env(safe-area-inset-right,0px));top:calc(14px + env(safe-area-inset-top,0px));width:min(300px,calc(100vw - 32px));padding:8px 12px}
+#gQuestBox summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--sign);padding:2px 0}
+#gQuest{display:grid;gap:5px;margin-top:6px}
+.q{display:flex;justify-content:space-between;gap:10px;font-size:12px}.q .qp{color:var(--mute);white-space:nowrap}.q.done .qn{text-decoration:line-through;color:var(--mute)}.q.done .qp{color:#7fd48f}
+#gPrompt{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));padding:8px 14px;font-size:14px;font-weight:500;white-space:nowrap}
+#gAct{position:fixed;right:max(20px,env(safe-area-inset-right,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px));width:84px;height:84px;border-radius:50%;background:var(--sign);color:var(--navy);font-weight:700;font-size:13px;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+@media (pointer:fine){ #gAct{display:none!important} }
+#gBtns{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:6px}
+#gBtns .ib{background:var(--panel);backdrop-filter:blur(10px)}
+#gPanel{position:fixed;inset:0;z-index:7;display:grid;place-items:center;padding:16px;background:rgba(5,10,22,.55)}
+.gp{width:min(760px,100%);max-height:calc(100% - 8px);overflow:auto;background:var(--panel2);padding:16px 18px;display:grid;gap:12px;-webkit-user-select:text;user-select:text}
+.gp header{display:flex;justify-content:space-between;align-items:center;gap:10px}.gp header h2{margin:0;font-size:17px;color:var(--sign);text-wrap:balance}
+#gPanelB{display:grid;gap:10px;font-size:14px;line-height:1.5}#gPanelB p{margin:0}#gPanelB h3{margin:6px 0 0;font-size:13px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+#gPanelB ul{margin:0;padding-left:18px;display:grid;gap:5px}
+.shop{display:grid;gap:6px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:6px;flex-wrap:wrap}
+.item.col{display:grid;justify-content:stretch}.item.col .gb{justify-self:start}
+.need{display:flex;gap:5px;flex-wrap:wrap}.chip{font-size:11px;font-family:var(--mono);padding:2px 7px;border-radius:10px;border:1px solid rgba(230,106,79,.6);color:#ffb3a3}.chip.have{border-color:rgba(127,212,143,.6);color:#a8e7b3}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}.tab{padding:7px 12px;font-size:13px;border-bottom:2px solid transparent;color:var(--mute)}.tab.on{color:var(--sign);border-bottom-color:var(--sign);font-weight:600}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:6px}
+.choice{text-align:left;white-space:normal;font-weight:500}.choice.ok{border-color:#58c46e!important;background:rgba(88,196,110,.18)}.choice.bad{border-color:#e66a4f!important;background:rgba(230,106,79,.18)}
+.fb{min-height:1.5em;color:var(--paper)}
+.apps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:8px}
+.app{display:grid;gap:4px;text-align:left;padding:16px;border-radius:8px;border:1px solid var(--line);background:linear-gradient(160deg,#16305e,#0e1c38)}.app:hover{border-color:var(--sign)}.app span{font-size:12px;color:var(--mute)}
+.tw{font-family:var(--mono);font-size:17px;line-height:1.7;word-spacing:4px}.tw .cur{color:var(--navy);background:var(--sign);border-radius:3px;padding:0 3px}
+.tstat{font-size:13px;color:var(--mute)}
+.snake{width:min(324px,100%);height:auto;aspect-ratio:1;border-radius:6px;justify-self:center;touch-action:none;max-width:100%}
+.labgrid{display:grid;grid-template-columns:minmax(0,1.25fr) 170px minmax(0,1fr);gap:12px;align-items:start}
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:5px;max-height:360px;overflow:auto;padding-right:2px}
+.reag{display:grid;grid-template-columns:14px 1fr;gap:2px 7px;align-items:start;text-align:left;padding:6px 8px;border:1px solid var(--line);border-radius:5px;font-size:13px}
+.reag:hover{border-color:var(--sign)}.reag .sw{width:14px;height:14px;border-radius:50%;border:1px solid rgba(255,255,255,.4);margin-top:2px}.reag b{display:block}.reag small{display:block;color:var(--mute);font-size:11px;line-height:1.3}.reag .hz{grid-column:2;color:#ffc58f}
+.bench{display:grid;gap:6px;justify-items:center}.tube{width:150px;height:auto;max-width:100%}
+.res{display:grid;gap:6px}.eq{color:var(--sign);font-size:14px}.new{color:#7fd48f;font-weight:600}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px}
+@media (max-width:820px){ body.mode-game #where,body.mode-game #bar{display:none!important} #gHud{max-width:calc(100vw - 160px);padding:7px 10px;gap:8px} #gHud .logo{display:none} .gst{gap:8px} .labgrid{grid-template-columns:1fr} .shelf{max-height:220px} #menu{background:rgba(9,18,38,.82);align-items:flex-start} .mcard{margin-left:0} #gHud{max-width:calc(100vw - 32px)} #gQuestBox{top:auto;bottom:calc(220px + env(safe-area-inset-bottom,0px));width:min(260px,calc(100vw - 140px))} #gPrompt{bottom:calc(70px + env(safe-area-inset-bottom,0px));font-size:13px;white-space:normal;max-width:calc(100vw - 140px);left:16px;transform:none} .gen i{width:120px} }
+
 </style>
 <canvas id="c" tabindex="0" aria-label="Cảnh 3D trường THCS Trưng Vương"></canvas>
-<div id="stamp" class="pn hud"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#12213f" stroke="#f4c63a" stroke-width="2.4"/><circle cx="32" cy="32" r="25" fill="none" stroke="#f4c63a" stroke-width="1" opacity=".7"/><text x="32" y="35" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="21" fill="#f4c63a">TV</text><path d="M15 43 Q32 38 49 43 L49 47.5 Q32 42.5 15 47.5 Z" fill="#f4c63a"/><path d="M32 39.6 L32 45.6" stroke="#12213f" stroke-width="1.3"/></svg><div class="txt"><h1>Trường THCS Trưng Vương</h1><p>88 Yên Bái, Hải Châu, Đà Nẵng</p><p class="mono" style="font-size:11px;color:var(--mute)">Tỉ lệ 1:1 · đơn vị mét</p></div></div>
+<script>document.body.classList.add("mode-menu")</script>
+<div id="stamp" class="pn hud tour-only"><img class="logo" src="__LOGO__" alt="Logo Trường THCS Trưng Vương"><div class="txt"><h1>Trường THCS Trưng Vương</h1><p>88 Yên Bái, Hải Châu, Đà Nẵng</p><p class="mono" style="font-size:11px;color:var(--mute)">Tỉ lệ 1:1 · đơn vị mét</p></div></div>
 <div id="where" class="pn hud" aria-live="polite"><span id="whereT">Toàn cảnh</span><span id="xyz" class="mono"></span></div>
-<nav id="views" class="pn hud" aria-label="Điểm nhìn"></nav>
+<nav id="views" class="pn hud tour-only" aria-label="Điểm nhìn"></nav>
 <div id="bar" class="pn hud">
-  <div class="seg" id="modes" role="group" aria-label="Cách di chuyển"><button data-m="orbit" class="on">Toàn cảnh</button><button data-m="walk">Đi bộ</button><button data-m="fly">Bay</button></div>
-  <div id="timeBox"><label for="time" class="mono" id="clock">09:00</label><input id="time" type="range" min="5" max="21" step="0.05" value="9" aria-label="Giờ trong ngày"><span id="sunInfo" class="mono"></span></div>
-  <button class="ib" id="measure" title="Phím M">Đo</button>
+  <div class="seg tour-only" id="modes" role="group" aria-label="Cách di chuyển"><button data-m="orbit" class="on">Toàn cảnh</button><button data-m="walk">Đi bộ</button><button data-m="fly">Bay</button></div>
+  <div id="timeBox" class="tour-only"><label for="time" class="mono" id="clock">09:00</label><input id="time" type="range" min="5" max="21" step="0.05" value="9" aria-label="Giờ trong ngày"><span id="sunInfo" class="mono"></span></div>
+  <button class="ib tour-only" id="measure" title="Phím M">Đo</button><button class="ib tour-only" id="gToMenu">Menu</button>
   <div class="seg" id="qual" role="group" aria-label="Chất lượng hình"><button data-q="2" class="on">Cao</button><button data-q="1">Vừa</button><button data-q="0">Nhẹ</button></div>
 </div>
 <div id="mapBox" class="pn hud"><canvas id="map" width="352" height="472" aria-label="Sơ đồ tầng, bấm để đến vị trí"></canvas><div id="floors" role="group" aria-label="Chọn tầng"></div></div>
-<button id="infoBtn" class="ib hud" aria-expanded="false" aria-controls="info">Thông số</button>
-<aside id="info" class="pn hud" hidden>
+<button id="infoBtn" class="ib hud tour-only" aria-expanded="false" aria-controls="info">Thông số</button>
+<aside id="info" class="pn hud tour-only" hidden>
   <h2>Thông số công trình</h2>
   <dl>
     <dt>Diện tích đất</dt><dd>3.431,5 m²</dd><dt>Diện tích xây dựng</dt><dd>1.855,3 m²</dd><dt>Tổng diện tích sàn</dt><dd>8.873 m²</dd><dt>Chiều cao</dt><dd>20,7 m · 5 tầng</dd><dt>Mật độ xây dựng</dt><dd>54,1 %</dd><dt>Hoàn thành</dt><dd>2021</dd><dt>Giải thưởng</dt><dd>Giải Đồng KTQG 2024–2025</dd>
@@ -99,8 +171,27 @@ body.nohud .hud{display:none!important}
 <div id="hint" class="pn hud" hidden></div>
 <div id="cross" hidden></div>
 <div id="mlabel" class="mono" hidden></div>
+
+<div id="menu" hidden>
+  <div class="mcard">
+    <div class="mhead"><img class="logo big" src="__LOGO__" alt="Logo Trường THCS Trưng Vương"><div><h1>Trường THCS Trưng Vương</h1><p class="muted">88 Yên Bái, Hải Châu, Đà Nẵng · mô hình 3D tỉ lệ 1:1</p></div></div>
+    <div class="mbtns">
+      <button id="btnGame" class="mbig gold"><b>Một ngày ở Trưng Vương</b><span>Đi học, kiếm xu, ăn căn tin, làm thí nghiệm KHTN, chế tạo STEM, chơi máy tính phòng Tin</span></button>
+      <button id="btnTour" class="mbig"><b>Tham quan trường</b><span>Xem toàn cảnh, đi bộ, bay, đo khoảng cách, đổi giờ trong ngày</span></button>
+    </div>
+    <section class="macct" aria-labelledby="acctH"><h2 id="acctH">Tài khoản</h2><div id="acct"></div></section>
+    <p class="muted small">Mô hình độc lập dựng từ bản vẽ và ảnh đã công bố, không phải trang chính thức của nhà trường.</p>
+  </div>
+</div>
+<div id="gHud" class="pn ghud"><img class="logo" src="__LOGO__" alt=""><div class="gh"><div class="gnm"><b id="gName">Khách</b> <span id="gTitle" class="muted"></span></div><div class="gst mono"><span><b id="gCoins">0</b> xu</span><span><b id="gXp">0</b> KN</span><span id="gClock"></span></div><div class="gen"><span class="mono small muted">Năng lượng <b id="gEnergy">80</b></span><i><b id="gEnergyBar"></b></i></div></div></div>
+<details id="gQuestBox" class="pn ghud" open><summary>Nhiệm vụ hôm nay</summary><div id="gQuest"></div></details>
+<div id="gPrompt" class="pn ghud" hidden><kbd>E</kbd> <span id="gPromptT"></span></div>
+<button id="gAct" class="ghud" hidden>Tương tác</button>
+<div id="gBtns" class="ghud"><button id="gBagBtn" class="ib">Cặp sách <kbd>B</kbd></button><button id="gMenuBtn" class="ib">Menu</button></div>
+<div id="gPanel" hidden role="dialog" aria-modal="true" aria-labelledby="gPanelT"><div class="gp pn"><header><h2 id="gPanelT"></h2><button id="gPanelX" class="ib">Đóng</button></header><div id="gPanelB"></div></div></div>
 <div id="toast" class="pn" hidden role="status"></div>
 <div id="stick" class="hud" hidden><i></i></div>
-<div id="load" role="status"><div><div id="loadHead"><svg class="logo big" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#12213f" stroke="#f4c63a" stroke-width="2.4"/><circle cx="32" cy="32" r="25" fill="none" stroke="#f4c63a" stroke-width="1" opacity=".7"/><text x="32" y="35" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="21" fill="#f4c63a">TV</text><path d="M15 43 Q32 38 49 43 L49 47.5 Q32 42.5 15 47.5 Z" fill="#f4c63a"/><path d="M32 39.6 L32 45.6" stroke="#12213f" stroke-width="1.3"/></svg><h2>Trường THCS Trưng Vương</h2></div><p id="loadT">Đang dựng mô hình 3D</p><div id="pg"><i></i></div><p id="loadErr" hidden></p></div></div>
+<div id="load" role="status"><div><div id="loadHead"><img class="logo big" src="__LOGO__" alt="Logo Trường THCS Trưng Vương"><h2>Trường THCS Trưng Vương</h2></div><p id="loadT">Đang dựng mô hình 3D</p><div id="pg"><i></i></div><p id="loadErr" hidden></p></div></div>
+<!--__FIREBASE_CONFIG__-->
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 <script>/*__BUNDLE__*/</script>

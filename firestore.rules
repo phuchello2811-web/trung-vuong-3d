@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// Mỗi học sinh chỉ đọc và ghi được hồ sơ của chính mình: users/{uid}.
+// Kiểm tra kiểu và giới hạn từng trường để không ai ghi số xu tuỳ ý hay nhét dữ liệu lạ.
+// Giới hạn ở đây khớp với LIMITS trong src/auth.js.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function validProfile(d) {
+      return d.keys().hasOnly(['v', 'name', 'coins', 'energy', 'xp', 'day', 'clock',
+                               'inv', 'crafted', 'reactions', 'quests', 'stats', 'best', 'updatedAt'])
+        && d.keys().hasAll(['v', 'name', 'coins', 'energy', 'xp', 'day', 'clock', 'updatedAt'])
+        && d.v == 1
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 40
+        && d.coins is int && d.coins >= 0 && d.coins <= 1000000
+        && d.xp is int && d.xp >= 0 && d.xp <= 10000000
+        && d.energy is number && d.energy >= 0 && d.energy <= 100
+        && d.day is int && d.day >= 1 && d.day <= 100000
+        && d.clock is number && d.clock >= 390 && d.clock <= 1050
+        && (!('inv' in d) || (d.inv is map && d.inv.size() <= 60))
+        && (!('crafted' in d) || (d.crafted is map && d.crafted.size() <= 30))
+        && (!('reactions' in d) || (d.reactions is map && d.reactions.size() <= 80))
+        && (!('quests' in d) || (d.quests is map && d.quests.size() <= 20))
+        && (!('stats' in d) || (d.stats is map && d.stats.size() <= 20))
+        && (!('best' in d) || (d.best is map && d.best.size() <= 10))
+        && d.updatedAt == request.time;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      // Hồ sơ mới không được mang sẵn nhiều xu hay kinh nghiệm
+      allow create: if isOwner(uid) && validProfile(request.resource.data)
+        && request.resource.data.coins <= 500 && request.resource.data.xp <= 1000;
+      // Mỗi lần lưu (tự lưu khoảng 12 giây một lần) không được tăng quá mức chơi thật
+      allow update: if isOwner(uid) && validProfile(request.resource.data)
+        && request.resource.data.coins <= resource.data.coins + 2000
+        && request.resource.data.xp <= resource.data.xp + 3000;
+      allow delete: if isOwner(uid);
+    }
+
+    // Mọi đường dẫn khác đều bị chặn
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

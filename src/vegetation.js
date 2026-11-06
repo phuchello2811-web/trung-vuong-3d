@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { X,Z,M,Y,COURT_TREES,EAST_TREES,PERGOLA_Q } from './plan.js';
-import { leafTexture,broadLeafTexture,vineTexture } from './textures.js';
+import { leafTexture,broadLeafTexture,vineTexture,flowerTexture } from './textures.js';
+import { BRIDGE } from './school.js';
 
 export const windU={uTime:{value:0},uGlow:{value:.1}};
 
@@ -87,7 +88,8 @@ export function buildVegetation(b,scene,shrubsXYZ,aniso){
   const clump=(p,seed)=>{ const a=Math.sin(p*.081+seed)+.6*Math.sin(p*.233+seed*2.1)+.35*Math.sin(p*.61+seed*.7); return (a+1.95)/3.9; };   // 0..1, tạo mảng dày mảng thưa
   const bead=(P0,P1,q,y,lenA,lenB,face,step=2.1,skip)=>{ for(let p=P0;p<P1;p+=step*R(.7,1.3)){ if(skip&&p>skip[0]&&p<skip[1]) continue; const c=clump(p,q*.13); if(R()>.42+c*.8) continue; strand(X(q)+R(-.1,.1),y,Z(p),lenA+(lenB-lenA)*Math.pow(c,1.2)*R(.55,1.1),face); } };
   // Dàn hoa phía Đông: thả hai bên dầm
-  for(const q of PERGOLA_Q){ bead(396,697,q+3.8,Y[3]+.4,1.9,5,Math.PI/2,1.15); bead(396,697,q-3.8,Y[3]+.4,1.6,4.6,-Math.PI/2,1.15); }
+  // Cầu xanh: dây leo rủ dày từ bồn hai mép cầu, gần chạm đất (ảnh)
+  bead(BRIDGE.P0+2,BRIDGE.P1,BRIDGE.Q1+.6,Y[3]+.56,2.8,6.0,Math.PI/2,.8); bead(BRIDGE.P0+2,BRIDGE.P1,BRIDGE.Q0-.6,Y[3]+.56,2.6,5.8,-Math.PI/2,.8);
   // Bồn tầng 2 khối Tây, rủ xuống sân; chừa khoảng trước sảnh và bảng tên trường
   bead(418,695,170.8,Y[2]+.62,1.5,4.3,Math.PI/2,1.0,[516,636]);
   // Dây bám lam đứng và lan can tầng 3-5
@@ -99,12 +101,13 @@ export function buildVegetation(b,scene,shrubsXYZ,aniso){
   for(const L of [2,5]){ const yy=Y[L]+.3; b.boxPQ('plaster',246,302,468.2,471,Y[L]-.35,yy,{collide:false}); for(let p=248;p<301;p+=1.8) strand(X(471.2),yy,Z(p),R(1.8,3.2),Math.PI/2); }
   // Bụi ở sân vườn và mặt dàn
   for(const s of shrubsXYZ){ for(let k=0;k<2;k++){ const S=R(.6,1.05),yaw=R(0,6.28),t=R(0,1),l=R(.75,1.1); bleaf.push({p:[s[0],s[1]+S*.42,s[2]],q:qu(yaw,R(-.25,.25)),sx:S,sy:S*.9,c:[l,l*(1+t*.1),l*.75],n:[R(-.5,.5),1,R(-.5,.5)]}); } }
-  for(const q of PERGOLA_Q) for(let p=398;p<695;p+=2.6){ const s=R(.8,1.5),l=R(.8,1.1); for(let k=0;k<2;k++) leaf.push({p:[X(q)+R(-.15,.15),Y[3]+.5+s*.35,Z(p)],q:qu(R(0,6.28),R(-.2,.2)),sx:s,sy:s,c:[l,l,l*.8],n:[R(-.5,.5),1,R(-.5,.5)]}); }
-  // Dây phủ lên giàn giữa hai dầm
-  for(let k=0;k<420;k++){ const p=R(398,694),q=R(442,506),sc=R(.9,1.6),l=R(.75,1.05); leaf.push({p:[X(q),Y[3]-.02+R(0,.12),Z(p)],q:qu(R(0,6.28),-1.45+R(-.15,.15)),sx:sc,sy:sc,c:[l,l,l*.82],n:[R(-.4,.4),1,R(-.4,.4)]}); }
+  // Cây bụi và hoa giấy hồng trong bồn cầu
+  const flw=[];
+  for(const q of [BRIDGE.Q0+2.3,BRIDGE.Q1-2.3]) for(let p=BRIDGE.P0+3;p<BRIDGE.P1-2;p+=5.5){ for(let k=0;k<2;k++){ const s=R(.55,.95),l=R(.8,1.1); bleaf.push({p:[X(q)+R(-.08,.08),Y[3]+.6+s*.3,Z(p)+R(-.2,.2)],q:qu(R(0,6.28),R(-.25,.25)),sx:s,sy:s*.85,c:[l,l,l*.8],n:[R(-.4,.4),1,R(-.4,.4)]}); }
+    if(R()<.5) for(let k=0;k<3;k++){ const s=R(.45,.8); flw.push({p:[X(q)+R(-.15,.15),Y[3]+.75+R(0,.45),Z(p)+R(-.4,.4)],q:qu(R(0,6.28),R(-.6,.6)),sx:s,sy:s,c:[1,1,1],n:[R(-.4,.4),1,R(-.4,.4)]}); } }
   for(let p=420;p<694;p+=2.4){ const s=R(.7,1.25),l=R(.8,1.1); bleaf.push({p:[X(162+R(-6,7)),Y[2]+.68+s*.35,Z(p)],q:qu(R(0,6.28)),sx:s,sy:s,c:[l,l,l*.8],n:[R(-.5,.5),1,R(-.5,.5)]}); }
   const plane=new THREE.PlaneGeometry(1,1); const vPlane=new THREE.PlaneGeometry(1,1); vPlane.translate(0,-.5,0);
   const lm=foliageMaterial(leafTexture(aniso)),bm=foliageMaterial(broadLeafTexture(aniso)),vm=foliageMaterial(vineTexture(aniso),{vine:true,alpha:.2});
-  instanced(plane,lm,leaf,scene); instanced(plane,bm,bleaf,scene); instanced(vPlane,vm,vines,scene);
+  instanced(plane,lm,leaf,scene); instanced(plane,bm,bleaf,scene); instanced(vPlane,vm,vines,scene); instanced(plane,foliageMaterial(flowerTexture(aniso)),flw,scene);
   return {counts:{leaf:leaf.length,bleaf:bleaf.length,vines:vines.length}};
 }

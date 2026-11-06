@@ -19,7 +19,7 @@ export class Player {
   floorAt(x,z,fromY=60){ this.ray.set(new THREE.Vector3(x,fromY,z),new THREE.Vector3(0,-1,0)); this.ray.far=fromY+1; this.ray.firstHitOnly=true; const h=this.bvh.raycastFirst(this.ray.ray,THREE.DoubleSide,0,fromY+1); return h?h.point.y:null; }
   rayHit(origin,dir,far=300){ const r=new THREE.Ray(origin,dir); return this.bvh.raycastFirst(r,THREE.DoubleSide,0,far); }
   flyTo(pos,yaw,pitch,mode,dur=1.3){ this.tween={f:this.cam.position.clone(),t:new THREE.Vector3(...pos),q0:this.cam.quaternion.clone(),q1:new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch,yaw,0,'YXZ')),k:0,dur,yaw,pitch,mode}; }
-  look(dx,dy){ if(this.mode==='orbit'){ const o=this.orbit; o.auto=false; o.th-=dx*.005; o.ph=Math.max(.12,Math.min(1.55,o.ph-dy*.005)); } else { this.yaw-=dx*.0023; this.pitch=Math.max(-1.45,Math.min(1.45,this.pitch-dy*.0023)); } }
+  look(dx,dy){ if(this.frozen&&this.mode!=='orbit') return; if(this.mode==='orbit'){ const o=this.orbit; o.auto=false; o.th-=dx*.005; o.ph=Math.max(.12,Math.min(1.55,o.ph-dy*.005)); } else { this.yaw-=dx*.0023; this.pitch=Math.max(-1.45,Math.min(1.45,this.pitch-dy*.0023)); } }
   zoom(d){ if(this.mode==='orbit'){ this.orbit.auto=false; this.orbit.r=Math.max(18,Math.min(380,this.orbit.r*Math.exp(d*.001))); } else this.speed=Math.max(.8,Math.min(30,this.speed*Math.exp(-d*.001))); }
   moveVec(){ const k=this.keys; let f=(k.KeyW||k.ArrowUp?1:0)-(k.KeyS||k.ArrowDown?1:0)+this.touch.y,r=(k.KeyD||k.ArrowRight?1:0)-(k.KeyA||k.ArrowLeft?1:0)+this.touch.x; return {f,r}; }
   update(dt){
@@ -27,6 +27,7 @@ export class Player {
       if(t.k>=1){ this.tween=null; this.pos.copy(t.t); this.yaw=t.yaw; this.pitch=t.pitch; if(t.mode){ this.mode=t.mode; if(t.mode==='walk'){ const y=this.floorAt(t.t.x,t.t.z,t.t.y+.2); if(y!==null) this.pos.y=y+this.eye; this.vel.set(0,0,0);} if(t.mode==='orbit'){ const o=this.orbit,d=this.cam.position.clone().sub(o.t); o.r=d.length(); o.th=Math.atan2(d.x,d.z); o.ph=Math.acos(d.y/d.length()); } } }
       return; }
     if(this.mode==='orbit'){ const o=this.orbit; if(o.auto) o.th+=dt*.035; const s=Math.sin(o.ph); this.cam.position.set(o.t.x+o.r*s*Math.sin(o.th),o.t.y+o.r*Math.cos(o.ph),o.t.z+o.r*s*Math.cos(o.th)); this.cam.lookAt(o.t); return; }
+    if(this.frozen){ this.cam.position.copy(this.pos); this.cam.quaternion.setFromEuler(new THREE.Euler(this.pitch,this.yaw,0,'YXZ')); return; }
     const {f,r}=this.moveVec(),run=this.keys.ShiftLeft||this.keys.ShiftRight;
     if(this.mode==='fly'){ const sp=this.speed*4*(run?3:1); const fw=new THREE.Vector3(-Math.sin(this.yaw)*Math.cos(this.pitch),Math.sin(this.pitch),-Math.cos(this.yaw)*Math.cos(this.pitch)),rt=new THREE.Vector3(Math.cos(this.yaw),0,-Math.sin(this.yaw)),up=(this.keys.KeyE||this.keys.Space?1:0)-(this.keys.KeyQ?1:0);
       this.pos.addScaledVector(fw,f*sp*dt).addScaledVector(rt,r*sp*dt); this.pos.y+=up*sp*dt; }
@@ -34,7 +35,7 @@ export class Player {
     this.cam.position.copy(this.pos); this.cam.quaternion.setFromEuler(new THREE.Euler(this.pitch,this.yaw,0,'YXZ'));
   }
   walk(dt,f,r,run){
-    const sp=(run?3.4:this.speed); const fw=new THREE.Vector3(-Math.sin(this.yaw),0,-Math.cos(this.yaw)),rt=new THREE.Vector3(Math.cos(this.yaw),0,-Math.sin(this.yaw));
+    const sp=(run?3.4:this.speed)*(this.speedMul||1); const fw=new THREE.Vector3(-Math.sin(this.yaw),0,-Math.cos(this.yaw)),rt=new THREE.Vector3(Math.cos(this.yaw),0,-Math.sin(this.yaw));
     const steps=3,h=dt/steps,mv=new THREE.Vector3().addScaledVector(fw,f).addScaledVector(rt,r); if(mv.lengthSq()>1) mv.normalize(); mv.multiplyScalar(sp*h);
     for(let i=0;i<steps;i++){
       if(this.grounded) this.vel.y=-1.2; else this.vel.y-=9.81*h;

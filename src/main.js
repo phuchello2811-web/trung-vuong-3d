@@ -14,16 +14,34 @@ import { buildVegetation,windU } from './vegetation.js';
 import { buildCity } from './city.js';
 import { createSky,sunENU,sunDirSite } from './sky.js';
 import { Player } from './player.js';
+import { letterGeometry } from './letters.js';
+import LOGO from './logo_data.js';
+import { createGame } from './game/game.js';
 
 const $=id=>document.getElementById(id);
 const tick=()=>new Promise(r=>setTimeout(r,0));
 const prog=async(t,k)=>{ $('loadT').textContent=t; $('pg').firstElementChild.style.width=k+'%'; await tick(); };
 const isTouch=matchMedia('(pointer:coarse)').matches;
 
-function signMaterials(M4){
+function loadImg(src){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; }); }
+function canvasTex(c){ const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8; return t; }
+function vnFlag(w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d'); g.fillStyle='#da251d'; g.fillRect(0,0,w,h); g.fillStyle='#ffff00'; g.beginPath(); for(let i=0;i<5;i++){ const a=-Math.PI/2+i*4*Math.PI/5,r=h*.31; g[i?'lineTo':'moveTo'](w/2+Math.cos(a)*r,h/2+Math.sin(a)*r); } g.closePath(); g.fill(); return c; }
+async function signMaterials(M4){
   const mk=(tex,o={})=>{ const m=new THREE.MeshStandardMaterial({map:tex,roughness:.5,transparent:!!o.tr,alphaTest:o.tr?.4:0,side:THREE.DoubleSide,emissive:o.em||0,emissiveMap:o.em?tex:null,emissiveIntensity:o.ei||0,...(o.p||{})}); m.userData={noCast:true,noAO:true}; return m; };
   M4.mainSign=mk(textTexture([{t:'TRƯỜNG THCS TRƯNG VƯƠNG',size:150,y:128,color:'#f2b90f',weight:700,stroke:'#14306f',sw:9}],{w:2048,h:256}),{tr:true,em:0xffffff,ei:.12});
-  M4.gateSign=mk(textTexture([{t:'TRƯỜNG TRUNG HỌC CƠ SỞ',size:60,y:90,color:'#fff'},{t:'TRƯNG VƯƠNG',size:128,y:206,color:'#fff'},{t:'88 Yên Bái, Đà Nẵng',size:36,y:296,color:'#e4e9f4',weight:500}],{w:1024,h:360,bg:'#1c3f9c'}));
+  { // Bảng tên ở cổng, có logo thật của trường
+    const c=document.createElement('canvas'); c.width=1024; c.height=360; const g=c.getContext('2d'); g.fillStyle='#1c3f9c'; g.fillRect(0,0,1024,360);
+    try{ const im=await loadImg(LOGO); const h=290,w=h*im.width/im.height; g.drawImage(im,34,35,w,h); }catch(e){}
+    g.fillStyle='#fff'; g.textAlign='center'; g.textBaseline='middle'; const F='"Be Vietnam Pro","Helvetica Neue",Arial,sans-serif';
+    g.font=`700 54px ${F}`; g.fillText('TRƯỜNG TRUNG HỌC CƠ SỞ',610,92); g.font=`700 120px ${F}`; g.fillText('TRƯNG VƯƠNG',610,200); g.font=`500 34px ${F}`; g.fillStyle='#e4e9f4'; g.fillText('88 Yên Bái, Hải Châu, Đà Nẵng',610,292);
+    M4.gateSign=mk(canvasTex(c));
+  }
+  M4.flagSmall=mk(canvasTex(vnFlag(300,200)),{p:{roughness:.8}}); M4.flagSmall.userData={noAO:true};
+  { // Chữ thư pháp khắc trên bia "Tôn Sư Trọng Đạo"
+    const c=document.createElement('canvas'); c.width=256; c.height=720; const g=c.getContext('2d'); g.fillStyle='#3a3936'; g.textAlign='center'; g.textBaseline='middle';
+    g.font='700 118px "Dancing Script", cursive'; ['Tôn','Sư','Trọng','Đạo'].forEach((t,i)=>g.fillText(t,128,100+i*170));
+    M4.steleText=mk(canvasTex(c),{tr:true,p:{roughness:.7}}); M4.steleText.userData={noAO:true,noCast:true};
+  }
   M4.slogan=mk(textTexture([{t:'DẠY TỐT – HỌC TỐT',size:88,y:64,color:'#c0241f'}],{w:1024,h:128,bg:'#f4f2ea'}));
   M4.motto=mk(textTexture([{t:'DÂN CHỦ – KỶ CƯƠNG – TÌNH THƯƠNG – TRÁCH NHIỆM',size:66,y:112,color:'#f4c63a',weight:700}],{w:2048,h:200,bg:'#b4201c'}),{em:0xffffff,ei:.1});
   M4.canteen=mk(textTexture([{t:'CĂN TIN',size:116,y:96,color:'#ffffff',weight:700},{t:'TRƯỜNG THCS TRƯNG VƯƠNG',size:42,y:176,color:'#d8f0e4',weight:600}],{w:1024,h:256,bg:'#0e7a4e'}));
@@ -39,15 +57,22 @@ function signMaterials(M4){
 }
 
 function buildSigns(b){
-  const qx=X(171.3),y0=3.82,y1=4.72,z0=Z(628),z1=Z(524);
-  b.boxPQ('white',522,630,170.2,171.2,3.76,4.86);
-  b.poly('mainSign',[[qx,y0,z1],[qx,y0,z0],[qx,y1,z0],[qx,y1,z1]],[1,0,0],[[0,0],[1,0],[1,1],[0,1]]);
+  // Chữ nổi vàng kim gắn trên dải tường trắng phía trên mái che xanh (ảnh lối vào chính)
+  b.boxPQ('white',520,632,170.2,171.2,3.7,4.86);
+  { const {geo}=letterGeometry('main',.6,.05);
+    const m=new THREE.Matrix4().makeBasis(new THREE.Vector3(0,0,-1),new THREE.Vector3(0,1,0),new THREE.Vector3(1,0,0)).setPosition(X(171.22),3.92,Z(576));
+    b.add('gold',geo,m); geo.dispose(); }
+  // Cờ đỏ sao vàng cắm trên lan can tầng 2 (ảnh sân)
+  for(const p of [532,550,568,586,604,622]){ const x=X(169.6),z=Z(p),y=Y[2]+.62,d=new THREE.Vector3(.45,.89,0).normalize(),L=1.9,n=new THREE.Vector3(.89,-.45,0);
+    const top=[x+d.x*L,y+d.y*L,z]; b.rod('flagPole',[x,y,z],top,.014,5);
+    const A=new THREE.Vector3(...top).addScaledVector(d,-.04),B=A.clone().addScaledVector(d,-.62),C=B.clone().addScaledVector(n,.9),D=A.clone().addScaledVector(n,.9);
+    b.poly('flagSmall',[A.toArray(),D.toArray(),C.toArray(),B.toArray()],[0,0,1],[[0,1],[1,1],[1,0],[0,0]]); }
   // Số tầng màu lớn trên vách cầu thang đầu hồi khối Bắc, nhìn từ sân như ảnh
   for(const L of [2,3,4,5]){ const z=Z(714.5)+.01,a=X(484),c=X(510); b.poly('num'+L,[[a,Y[L]+.75,z],[c,Y[L]+.75,z],[c,Y[L]+3.2,z],[a,Y[L]+3.2,z]],[0,0,1],[[0,0],[1,0],[1,1],[0,1]]); }
   // Chữ tiếng Anh trên đỉnh khối xiên
   const f=frameM(363,433,-48,25,23,46),W=Math.hypot(48,25)/S,Ln=Math.hypot(23,46)/S; const s=b.m; b.setFrame(f);
   const zz=Ln+.5; b.box('plaster',-1.25,W+1.25,Y[6]-.65,Y[6]+.3,Ln+.1,zz-.01,{});
-  b.poly('engSign',[[-1.1,Y[6]-.5,zz],[W+1.1,Y[6]-.5,zz],[W+1.1,Y[6]+.2,zz],[-1.1,Y[6]+.2,zz]],[0,0,1],[[1,0],[0,0],[0,1],[1,1]]);
+  { const {geo}=letterGeometry('eng',.36,.04); const m=new THREE.Matrix4().makeBasis(new THREE.Vector3(-1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)).setPosition(W/2,Y[6]-.36,zz); b.add('inox',geo,m); geo.dispose(); }
   b.setFrame(s);
 }
 
@@ -68,8 +93,8 @@ async function main(){
   const aniso=Math.min(renderer.capabilities.getMaxAnisotropy(),16);
 
   await prog('Vẽ vật liệu theo màu ảnh công trình',8);
-  try{ await document.fonts.load('700 40px "Be Vietnam Pro"',"Trường"); }catch(e){}
-  const MATS=makeMaterials(aniso); signMaterials(MATS);
+  try{ await Promise.all([document.fonts.load('700 40px "Be Vietnam Pro"',"Trường"),document.fonts.load('700 40px "Dancing Script"',"Tôn Sư Trọng Đạo")]); }catch(e){}
+  const MATS=makeMaterials(aniso); await signMaterials(MATS);
   await prog('Dựng khung sàn, tường và mái theo bản vẽ',24);
   const b=new Batch();
   buildSite(b); buildSchool(b); buildSigns(b);
@@ -162,7 +187,8 @@ async function main(){
     {n:'Toàn cảnh',orbit:true},
     {n:'Cổng đường Yên Bái',p:[29.3,1.55,-6.6],y:Math.PI/2,x:.03,m:'walk'},
     {n:'Sân trường, tượng Hai Bà',p:[X(322),1.62,Z(590)],y:1.9,x:.12,m:'walk'},
-    {n:'Dưới dàn hoa',p:[X(470),1.62,Z(540)],y:Math.PI/2,x:.3,m:'walk'},
+    {n:'Dưới cầu xanh',p:[X(486),1.62,Z(452)],y:0,x:.34,m:'walk'},
+    {n:'Trên cầu xanh',p:[X(474),Y[3]+1.6,Z(678)],y:Math.PI,x:-.04,m:'walk'},
     {n:'Sân đa năng',p:[X(290),1.62,Z(255)],y:-.05,x:.08,m:'walk'},
     {n:'Thư viện',p:[X(80),1.62,Z(395)],y:-.12,x:-.03,m:'walk'},
     {n:'Hành lang tầng 3',p:[X(140),Y[3]+1.6,Z(440)],y:0,x:0,m:'walk'},
@@ -184,7 +210,7 @@ async function main(){
 
   // Điều khiển chuột và bàn phím
   let dragging=false,lx=0,ly=0,locked=false; const pid=new Set();
-  canvas.addEventListener('pointerdown',e=>{ canvas.focus({preventScroll:true}); if(measuring&&e.button===0&&!e.defaultPrevented){ measureClick(e); return; }
+  canvas.addEventListener('pointerdown',e=>{ if(window.__panelOpen) return; canvas.focus({preventScroll:true}); if(measuring&&e.button===0&&!e.defaultPrevented){ measureClick(e); return; }
     if(player.mode!=='orbit'&&!isTouch&&e.pointerType==='mouse'&&!locked){ try{ const r=canvas.requestPointerLock&&canvas.requestPointerLock(); if(r&&r.catch) r.catch(()=>{}); }catch(err){} }
     dragging=true; lx=e.clientX; ly=e.clientY; try{ canvas.setPointerCapture(e.pointerId);}catch(err){} player.orbit.auto=false; });
   canvas.addEventListener('pointerup',e=>{ dragging=false; });
@@ -192,7 +218,7 @@ async function main(){
   document.addEventListener('pointerlockchange',()=>{ locked=document.pointerLockElement===canvas; });
   addEventListener('pointermove',e=>{ if(locked){ player.look(e.movementX,e.movementY); return; } if(dragging){ player.look(e.clientX-lx,e.clientY-ly); lx=e.clientX; ly=e.clientY; } });
   canvas.addEventListener('wheel',e=>{ e.preventDefault(); player.zoom(e.deltaY); },{passive:false});
-  addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'&&e.target.type!=='range') return; if(e.code==='KeyM'){ toggleMeasure(); return; } if(e.code==='KeyU'){ document.body.classList.toggle('nohud'); return; } if(e.code==='KeyV'){ setMode(player.mode==='walk'?'fly':player.mode==='fly'?'orbit':'walk'); setViewOn(-1); return; }
+  addEventListener('keydown',e=>{ if(window.__panelOpen) return; if(e.target.tagName==='INPUT'&&e.target.type!=='range') return; if(document.body.classList.contains('mode-game')&&['KeyM','KeyV','KeyU'].includes(e.code)) return; if(e.code==='KeyM'){ toggleMeasure(); return; } if(e.code==='KeyU'){ document.body.classList.toggle('nohud'); return; } if(e.code==='KeyV'){ setMode(player.mode==='walk'?'fly':player.mode==='fly'?'orbit':'walk'); setViewOn(-1); return; }
     if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)&&e.target.tagName!=='INPUT'&&e.target.tagName!=='BUTTON') e.preventDefault(); if(e.target.type==='range'&&e.code.startsWith('Arrow')) return; player.keys[e.code]=true; });
   addEventListener('keyup',e=>{ player.keys[e.code]=false; });
   addEventListener('blur',()=>{ player.keys={}; dragging=false; });
@@ -253,7 +279,7 @@ async function main(){
     if(sx<-20||sy<-20||sx>MW+20||sy>MH+20) return; mg.save(); mg.translate(sx,sy); mg.rotate(a); mg.fillStyle='#f4c63a'; mg.strokeStyle='#0e1c38'; mg.lineWidth=2; mg.beginPath(); mg.moveTo(0,-12); mg.lineTo(8,9); mg.lineTo(0,5); mg.lineTo(-8,9); mg.closePath(); mg.fill(); mg.stroke(); mg.restore(); }
   function frame(){
     const dt=Math.min(clock.getDelta(),.05); t+=dt; windU.uTime.value=t; sky.uni.uTime.value=t;
-    player.update(dt);
+    player.update(dt); game.update(dt);
     // Mức tầng và vị trí
     const c=camera.position,lv=player.mode==='orbit'?'':locate(c.x,c.y,c.z);
     let txt=player.mode==='orbit'?'Toàn cảnh':`${typeof lv.L==='number'?'Tầng '+lv.L:lv.L} · ${lv.name}`;
@@ -267,9 +293,16 @@ async function main(){
     fAcc+=dt; fN++; if(fAcc>2.5){ const fps=fN/fAcc; fAcc=0; fN=0; if(!userQ&&fps<22&&quality>0&&!window.__noAuto){ if(++slow>=2){ slow=0; setQ(quality-1,'Đã giảm chất lượng hình để chạy mượt hơn'); } } else if(fps>=22) slow=0; }
     if(!window.__manual) requestAnimationFrame(frame);
   }
-  $('load').hidden=true;
+  // Game và menu khởi đầu
+  const game=createGame({player,camera,scene,toast,
+    setClock(h,bake){ hour=Math.max(5,Math.min(21,h)); $('time').value=hour; applySun(bake); },
+    toMenu(){ player.tween=null; setMode('orbit'); setViewOn(0); const o=player.orbit; o.auto=!matchMedia('(prefers-reduced-motion: reduce)').matches; o.t.set(0,7,0); $('hint').hidden=true; $('cross').hidden=true; },
+    toTour(){ goView(0); showHint('orbit'); },
+    toGame(){ const v=VIEWS[1]; player.frozen=false; player.flyTo(v.p,v.y,v.x,'walk',1.4); [...$('modes').children].forEach(c=>c.classList.toggle('on',c.dataset.m==='walk')); showHint('walk'); },
+  });
+  $('load').hidden=true; $('menu').hidden=false; setTimeout(()=>$('btnGame').focus(),60);
   // Giao tiếp để chụp thử nghiệm
-  window.__app={player,camera,scene,renderer,info:{cityInfo,tris:meshes.reduce((a,m)=>a+m.geometry.index.count/3,0),meshes:meshes.length,col:colArr.length/9},setHour(h){ hour=h; applySun(true); },goto(p,y,x,m){ player.tween=null; player.mode=m||'fly'; player.pos.set(...p); player.yaw=y; player.pitch=x; player.vel.set(0,0,0); player.grounded=false; camera.position.set(...p); },step(n=1){ for(let i=0;i<n;i++) frame(); },setQ,VIEWS,hud(v){ document.body.classList.toggle('nohud',!v); $('hint').hidden=true; },walkTest(path){ return runWalk(player,path); },orbit(th,ph,r,tx,ty,tz){ const o=player.orbit; player.mode='orbit'; player.tween=null; o.auto=false; o.th=th;o.ph=ph;o.r=r; if(tx!==undefined) o.t.set(tx,ty,tz); }};
+  window.__app={game,player,camera,scene,renderer,info:{cityInfo,tris:meshes.reduce((a,m)=>a+m.geometry.index.count/3,0),meshes:meshes.length,col:colArr.length/9},setHour(h){ hour=h; applySun(true); },goto(p,y,x,m){ player.tween=null; player.mode=m||'fly'; player.pos.set(...p); player.yaw=y; player.pitch=x; player.vel.set(0,0,0); player.grounded=false; camera.position.set(...p); },step(n=1){ for(let i=0;i<n;i++) frame(); },setQ,VIEWS,hud(v){ document.body.classList.toggle('nohud',!v); $('hint').hidden=true; },walkTest(path){ return runWalk(player,path); },orbit(th,ph,r,tx,ty,tz){ const o=player.orbit; player.mode='orbit'; player.tween=null; o.auto=false; o.th=th;o.ph=ph;o.r=r; if(tx!==undefined) o.t.set(tx,ty,tz); }};
   window.__ready=true;
   renderer.compile(scene,camera);
   frame();

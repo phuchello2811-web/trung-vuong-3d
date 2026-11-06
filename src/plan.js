@@ -57,11 +57,11 @@ ROOMS.push(
   room(5,716.5,788,127,254,'Phòng Thí nghiệm Sinh học','lab','Pmin','Pmax','Qmax'),
   room(5,716.5,788,254,298,'Phòng Chuẩn bị','office','Pmin','Pmax'),
   room(5,716.5,788,298,345,'Phòng Chuẩn bị','office','Pmin','Pmax'),
-  room(5,716.5,788,345,467,'Phòng học Công nghệ','lab','Pmin','Pmax','Qmax'),
+  room(5,716.5,788,345,467,'Phòng Công nghệ – STEM','stem','Pmin','Pmax','Qmax'),
   room(5,325,397,168,298,'Phòng học Máy tính','comp','Pmin','Pmax','Qmax'),
   room(5,325,397,298,424,'Phòng học Máy tính','comp','Pmin','Pmax','Qmax'),
   room(5,153,224,207,255,'Phòng Chuẩn bị','office','Pmax','Pmin'),
-  room(5,153,224,255,390,'Phòng Thí nghiệm Hoá học','lab','Pmax','Pmin','Qmin'),
+  room(5,153,224,255,390,'Phòng thí nghiệm KHTN (Hoá học)','lab','Pmax','Pmin','Qmin'),
   room(5,153,224,390,512,'Phòng học Ngoại ngữ','lab','Pmax','Pmin','Qmin'),
 );
 
@@ -94,7 +94,9 @@ const railsUp = [[[417,153],[695,153]],[[695,153],[695,512]],[[695,512],[716.5,5
   [[788,127],[800,127]],[[800,127],[800,467]],[[800,467],[788,467]],
   [[142,255],[142,505]],[[142,505],[153,505]],[[142,255],[153,255]],
   [[245,467],[245,512]],[[224,512],[245,512]],[[397,424],[397,433]]];
-RAILS[3]=railsUp; RAILS[4]=railsUp; RAILS[5]=railsUp;
+RAILS[4]=railsUp; RAILS[5]=railsUp;
+// Tầng 3: chừa lối từ hành lang khối Bắc ra cầu xanh (ảnh cầu dây leo)
+RAILS[3]=railsUp.map(s=>s).filter(s=>!(s[0][0]===695&&s[1][0]===695&&s[0][1]===153&&s[1][1]===512)).concat([[[695,153],[695,437]],[[695,511],[695,512]]]);
 
 // Cột tròn tầng 1 đọc từ mặt bằng tầng 1
 export const COLS = [
@@ -144,9 +146,11 @@ export function locate(x,y,z){
     if(P>=142&&P<394&&Q>=205) return {L,name:'Sân đa năng'};
     if(P>=695&&Q>=155&&Q<=370) return {L,name:'Khu để xe'};
     if(P>=394&&P<=694&&Q>=155&&Q<=425) return {L,name:'Sân trường'};
+    if(Q>425&&P>394&&P<697) return {L,name:'Dưới cầu xanh'};
     if(Q>425) return {L,name:'Lối vào chính'};
     return {L,name:'Hành lang'};
   }
+  if(L===3&&P>=394&&P<697&&Q>=433&&Q<=515) return {L,name:'Cầu xanh'};
   if(P>=303&&P<=417&&Q>=153&&Q<=424||P>=695&&P<=716.5||Q>=127&&Q<=153||P>=224&&P<=264) return {L,name:'Hành lang'};
   return {L,name:'Hành lang'};
 }
