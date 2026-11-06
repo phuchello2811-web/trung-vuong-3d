@@ -5,8 +5,8 @@ const b=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/
 const p=await b.newPage(); await p.setViewport({width:800,height:500}); p.on('pageerror',e=>console.log('ERR',e.message));
 await p.goto(`http://localhost:${srv.address().port}/`,{waitUntil:'load'}); await p.waitForFunction('window.__ready===true',{timeout:180000});
 const r=await p.evaluate((NA)=>{ window.__manual=true; const a=window.__app,P=a.player,Y=[0,.02,4.2,8.1,12,15.9,19.8]; const falls=[]; let agents=0; let seed=12345; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
-  for(const L of [2,3,4,5,6]) for(let k=0;k<NA;k++){
-    const x=-28+rnd()*56, z=-38+rnd()*76, fy=P.floorAt(x,z,Y[L]+1.2); if(fy===null||Math.abs(fy-Y[L])>.05) continue; { const q=new window.THREE.Vector3(x,fy+1.6,z),d=P.resolve(q); if(Math.hypot(d.x,d.z)>.02) continue; } agents++;
+  for(const L of [2,3,4,5,6,1.5,2.5,3.5,4.5]) for(let k=0;k<NA;k++){
+    const yl=Number.isInteger(L)?Y[L]:(Y[Math.floor(L)]+Y[Math.ceil(L)])/2, x=-28+rnd()*56, z=-38+rnd()*76, fy=P.floorAt(x,z,yl+1.2); if(fy===null||Math.abs(fy-yl)>.12) continue; { const q=new window.THREE.Vector3(x,fy+1.6,z),d=P.resolve(q); if(Math.hypot(d.x,d.z)>.02) continue; } agents++;
     P.mode='walk'; P.tween=null; P.frozen=false; P.pos.set(x,fy+1.6,z); P.vel.set(0,0,0); P.grounded=true;
     let yaw=rnd()*6.283;
     for(let t=0;t<900;t++){ if(t%90===0) yaw=rnd()*6.283; P.yaw=yaw; P.keys={KeyW:true}; const before=P.pos.clone(); P.update(1/60);

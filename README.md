@@ -10,6 +10,16 @@ Mô hình độc lập, dựng từ bản vẽ và ảnh đã công bố, không
 
 **Tham quan trường**: xem toàn cảnh, đi bộ hoặc bay, sơ đồ từng tầng, đo khoảng cách bằng mét thật, đổi giờ trong ngày (vị trí mặt trời tính theo toạ độ thật của trường).
 
+Khi đi bộ, nhìn vào vật và nhấn `E` (điện thoại: nút Tương tác):
+
+| Ở đâu | Nhấn E để |
+|---|---|
+| Lớp học | Kéo hai tấm bảng xanh vào che tivi hoặc kéo ra; bật, tắt tivi (hộp điều khiển cạnh bảng) |
+| Sân bóng rổ (sân có mái che) | Ném bóng vào rổ |
+| Sân pickleball (dưới cầu xanh) | Xem một pha đánh qua lại |
+| Phòng Âm nhạc (tầng 2) | Chơi đàn piano bài "Kìa con bướm vàng", đánh trống |
+| Cầu thang chính tầng 5 | Cửa cuốn lên sân thượng đang khoá |
+
 **Một ngày ở Trưng Vương** (game, đang tạm tắt):
 
 | Ở đâu | Làm gì |

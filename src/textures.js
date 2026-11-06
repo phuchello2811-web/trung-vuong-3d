@@ -159,6 +159,15 @@ export function makeMaterials(aniso,envRef){
   M.yellowFlower=std({color:0xf5c21f,roughness:.8}); M.bottleCap=std({color:0x1f6fd1,roughness:.5});
   M.acGrille=std({color:0xb9bcbf,roughness:.6}); M.cove=std({color:0xb88cff,emissive:0xa27bff,emissiveIntensity:1.6},{noCast:true});
   M.glassGreen=new THREE.MeshStandardMaterial({color:0x2f5a45,roughness:.05,metalness:.25,transparent:true,opacity:.55,envMapIntensity:1.4,depthWrite:false,side:THREE.DoubleSide}); M.glassGreen.userData={noCast:true,noAO:true};
+  // Sân epoxy xanh, sân pickleball, bảng rổ, cửa cuốn, nhạc cụ, sân khấu
+  const epoxy=genTex(512,(u,v)=>{ const n=fbm(u,v,6,4,191),k=.92+(n-.5)*.12; return {c:[46*k,128*k,86*k],h:n*.2,r:.35}; },4,{normal:.4}); M.epoxy=std({...epoxy,roughness:.38,envMapIntensity:1.1});
+  M.pickleBlue=std({color:0x2c5d9e,roughness:.7}); M.pickleGreen=std({color:0x3b7d4f,roughness:.75});
+  M.padBlue=std({color:0x1f4e9c,roughness:.8}); M.rimOrange=std({color:0xe0501f,roughness:.45,metalness:.4});
+  M.shutter=std({color:0xb9bdc0,roughness:.45,metalness:.6});
+  M.pianoBlack=std({color:0x0b0b0d,roughness:.12,metalness:.15,envMapIntensity:1.4}); M.keyWhite=std({color:0xf4f1e8,roughness:.3});
+  M.drumRed=std({color:0xa8161c,roughness:.25,metalness:.3}); M.drumHead=std({color:0xf2efe6,roughness:.6}); M.cymbal=std({color:0xd9b24a,roughness:.25,metalness:.9});
+  M.guitarWood=std({...wood,color:0xffc070,roughness:.3});
+  M.stageWood=std({...wood,color:0xe8b27a,roughness:.35}); M.curtainRed=std({...cur,color:0xd8303a,roughness:.9});
   return M;
 }
 

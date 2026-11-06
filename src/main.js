@@ -17,6 +17,7 @@ import { Player } from './player.js';
 import { letterGeometry } from './letters.js';
 const LOGO=document.getElementById('fav')?.href||'';   // logo trường: nhúng một lần trong thẻ favicon
 import { createGame } from './game/game.js';
+import { createInteract } from './interact.js';
 
 const $=id=>document.getElementById(id);
 const tick=()=>new Promise(r=>setTimeout(r,0));
@@ -63,6 +64,27 @@ async function classroomPrints(M4,mk){
     g.fillStyle='#14234a'; g.font=`700 20px ${F}`; g.textAlign='center'; g.fillText('QĐ. Hoàng Sa',px(112),py(17.4)); g.fillText('QĐ. Trường Sa',px(114.2),py(11.6)); g.fillText('BIỂN ĐÔNG',px(111.6),py(13.6));
     g.beginPath(); g.arc(px(108.22),py(16.07),6,0,6.3); g.fill(); g.font=`600 18px ${F}`; g.textAlign='left'; g.fillText('Đà Nẵng',px(108.4),py(16.07)+6);
     g.fillStyle='#c4161c'; g.fillRect(14,14,w-28,74); g.fillStyle='#fff'; g.font=`800 30px ${F}`; g.textAlign='center'; g.fillText('BẢN ĐỒ VIỆT NAM',w/2,62); }),{p:{roughness:.6}});
+  // Bảng kẻ khuông nhạc, áp phích âm nhạc
+  const staff=(g,x0,x1,y,col)=>{ g.strokeStyle=col; g.lineWidth=3; for(let i=0;i<5;i++){ g.beginPath(); g.moveTo(x0,y+i*16); g.lineTo(x1,y+i*16); g.stroke(); } };
+  const note=(g,x,y,col,stem=true)=>{ g.fillStyle=col; g.beginPath(); g.ellipse(x,y,11,8,-.4,0,6.3); g.fill(); if(stem){ g.strokeStyle=col; g.lineWidth=3; g.beginPath(); g.moveTo(x+10,y-2); g.lineTo(x+10,y-50); g.stroke(); } };
+  M4.musicBoard=mk(cv(1440,500,(g,w,h)=>{ chalkBg(g,w,h); const c='rgba(244,242,232,.85)';
+    g.textAlign='center'; g.font=`700 52px ${H}`; g.fillText('Âm nhạc',w/2,64); g.textAlign='left'; g.font=`600 34px ${H}`; g.fillText('Bài hát: Kìa con bướm vàng',60,124);
+    for(const y of [190,330]){ staff(g,60,w-60,y,c); g.font=`400 104px serif`; g.fillText('𝄞',62,y+76); }
+    const sol=[0,1,2,0,0,1,2,0,2,3,4,2,3,4]; sol.forEach((k,i)=>note(g,200+i*80,190+64-k*8,c));
+    const nm=['Đô','Rê','Mi','Đô','Đô','Rê','Mi','Đô','Mi','Fa','Son','Mi','Fa','Son']; g.font=`600 24px ${F}`; nm.forEach((t,i)=>g.fillText(t,188+i*80,300));
+    [4,5,4,3,2,0,4,5,4,3,2,0].forEach((k,i)=>note(g,200+i*92,330+64-k*8,c)); }),{p:{roughness:.85}});
+  M4.musicPoster=mk(cv(540,720,(g,w,h)=>{ g.fillStyle='#fff6e0'; g.fillRect(0,0,w,h); g.fillStyle='#7b2cbf'; g.fillRect(0,0,w,120); g.fillStyle='#fff'; g.textAlign='center'; g.font=`800 40px ${F}`; g.fillText('CÁC NỐT NHẠC',w/2,76);
+    const nn=['Đô','Rê','Mi','Fa','Son','La','Si']; staff(g,40,w-40,200,'#333'); nn.forEach((t,i)=>{ note(g,80+i*62,200+64-i*8+16,'#7b2cbf'); g.fillStyle='#222'; g.font=`700 26px ${F}`; g.fillText(t,80+i*62,330); });
+    g.textAlign='left'; g.font=`600 26px ${F}`; g.fillStyle='#333'; ['Nốt tròn: 4 phách','Nốt trắng: 2 phách','Nốt đen: 1 phách','Nốt móc đơn: 1/2 phách'].forEach((t,i)=>g.fillText('• '+t,50,420+i*62)); }),{p:{roughness:.7}});
+  M4.musicPoster2=mk(cv(540,720,(g,w,h)=>{ g.fillStyle='#e8f6ff'; g.fillRect(0,0,w,h); g.fillStyle='#1c6fd1'; g.fillRect(0,0,w,120); g.fillStyle='#fff'; g.textAlign='center'; g.font=`800 38px ${F}`; g.fillText('NHẠC CỤ DÂN TỘC',w/2,76);
+    g.fillStyle='#14234a'; g.font=`600 30px ${F}`; ['Đàn bầu','Đàn tranh','Đàn nguyệt','Sáo trúc','Đàn T’rưng','Trống cơm'].forEach((t,i)=>{ g.fillStyle=['#c4161c','#e48a1b','#2e9e48','#1c6fd1','#8a3fc0','#b5452f'][i]; g.beginPath(); g.arc(80,200+i*86,22,0,6.3); g.fill(); g.fillStyle='#14234a'; g.textAlign='left'; g.fillText(t,124,211+i*86); }); }),{p:{roughness:.7}});
+  // Phông sân khấu phòng hội đồng (theo ảnh lễ 20/11 của trường)
+  M4.stageBack=mk(cv(2048,640,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,0,h); gr.addColorStop(0,'#123a9a'); gr.addColorStop(1,'#0b2470'); g.fillStyle=gr; g.fillRect(0,0,w,h);
+    g.fillStyle='#d21f26'; g.fillRect(0,0,w,92); g.fillStyle='#ffe14a'; g.textAlign='center'; g.font=`800 58px ${F}`; g.fillText('ĐẢNG CỘNG SẢN VIỆT NAM QUANG VINH MUÔN NĂM!',w/2,66);
+    if(logoIm){ g.fillStyle='#1c4fc0'; g.fillRect(150,140,300,420); const lh=330,lw=lh*logoIm.width/logoIm.height; g.drawImage(logoIm,300-lw/2,180,lw,lh); }
+    const pg=g.createLinearGradient(560,0,1900,0); pg.addColorStop(0,'#fbe3ef'); pg.addColorStop(1,'#e3ecff'); g.fillStyle=pg; g.fillRect(560,140,1340,420);
+    g.fillStyle='#0b2470'; g.font=`700 44px ${F}`; g.fillText('TRƯỜNG TRUNG HỌC CƠ SỞ TRƯNG VƯƠNG',1230,250); g.fillStyle='#d21f26'; g.font=`800 96px ${F}`; g.fillText('CHÀO MỪNG',1230,380); g.fillStyle='#0b2470'; g.font=`600 40px ${F}`; g.fillText('88 Yên Bái, Hải Châu, Đà Nẵng',1230,470); }),{p:{roughness:.8}});
+  M4.lecternLogo=mk(cv(256,330,(g,w,h)=>{ g.fillStyle='#1c3f9c'; g.fillRect(0,0,w,h); if(logoIm){ const lh=230,lw=lh*logoIm.width/logoIm.height; g.drawImage(logoIm,w/2-lw/2,20,lw,lh); } g.fillStyle='#fff'; g.textAlign='center'; g.font=`700 24px ${F}`; g.fillText('TRƯNG VƯƠNG',w/2,295); }));
   const nums=[...classNumbers().values()];
   for(const n of nums) M4['plate_'+n]=mk(cv(400,192,(g,w,h)=>{ g.fillStyle='#1c3f9c'; g.fillRect(0,0,w,h); g.strokeStyle='#f4c63a'; g.lineWidth=8; g.strokeRect(6,6,w-12,h-12); g.fillStyle='#fff'; g.textAlign='center'; g.font=`700 34px ${F}`; g.fillText('PHÒNG HỌC',w/2,66); g.font=`800 74px ${F}`; g.fillStyle='#f4c63a'; g.fillText(n,w/2,150); }));
 }
@@ -91,7 +113,7 @@ async function signMaterials(M4){
   M4.canteen=mk(textTexture([{t:'CĂN TIN',size:116,y:96,color:'#ffffff',weight:700},{t:'TRƯỜNG THCS TRƯNG VƯƠNG',size:42,y:176,color:'#d8f0e4',weight:600}],{w:1024,h:256,bg:'#0e7a4e'}));
   M4.vnmap=mk(textTexture([{t:'BẢN ĐỒ',size:46,y:200,color:'#1c3f9c',weight:600},{t:'VIỆT NAM',size:46,y:252,color:'#1c3f9c',weight:600}],{w:300,h:460,bg:'#eaf2fb'}));
   M4.engSign=mk(textTexture([{t:'TRUNG VUONG SECONDARY SCHOOL',size:82,y:64,color:'#556070',weight:600}],{w:2048,h:128}),{tr:true});
-  const nums={2:'#c98e20',3:'#117e72',4:'#1e4c8f',5:'#6b3f7d'};
+  const nums={1:'#b5452f',2:'#c98e20',3:'#117e72',4:'#1e4c8f',5:'#6b3f7d'};
   for(const k of Object.keys(nums)) M4['num'+k]=mk(textTexture([{t:k,size:300,y:190,color:'#fff'}],{w:512,h:384,bg:nums[k]}));
   // Gáy sách
   const c=document.createElement('canvas'); c.width=512;c.height=128; const g=c.getContext('2d'); g.fillStyle='#2a221b'; g.fillRect(0,0,512,128); const hues=['#8a3b2c','#2c5d8a','#d9c9a0','#3a6b4a','#7a5a2b','#c7b48a','#44546a','#b04a3a','#e4dcc5','#26415f'];
@@ -113,7 +135,7 @@ function buildSigns(b){
     const A=new THREE.Vector3(...top).addScaledVector(d,-.04),B=A.clone().addScaledVector(d,-.62),C=B.clone().addScaledVector(n,.9),D=A.clone().addScaledVector(n,.9);
     b.poly('flagC'+fi,[A.toArray(),D.toArray(),C.toArray(),B.toArray()],[0,0,1],[[0,1],[1,1],[1,0],[0,0]]); });
   // Số tầng màu lớn trên vách cầu thang đầu hồi khối Bắc, nhìn từ sân như ảnh
-  for(const L of [2,3,4,5]){ const z=Z(714.5)+.01,a=X(484),c=X(510); b.poly('num'+L,[[a,Y[L]+.75,z],[c,Y[L]+.75,z],[c,Y[L]+3.2,z],[a,Y[L]+3.2,z]],[0,0,1],[[0,0],[1,0],[1,1],[0,1]]); }
+  for(const L of [1,2,3,4,5]){ const z=Z(714.5)+.01,a=X(483),c=X(495.5); b.poly('num'+L,[[a,Y[L]+2.62,z],[c,Y[L]+2.62,z],[c,Y[L]+3.56,z],[a,Y[L]+3.56,z]],[0,0,1],[[0,0],[1,0],[1,1],[0,1]]); }
   // Chữ tiếng Anh trên đỉnh khối xiên
   const f=frameM(363,433,-48,25,23,46),W=Math.hypot(48,25)/S,Ln=Math.hypot(23,46)/S; const s=b.m; b.setFrame(f);
   const zz=Ln+.5; b.box('plaster',-1.25,W+1.25,Y[6]-.65,Y[6]+.3,Ln+.1,zz-.01,{});
@@ -250,7 +272,7 @@ async function main(){
     player.flyTo(v.p,v.y,v.x,v.m,1.4); [...$('modes').children].forEach(c=>c.classList.toggle('on',c.dataset.m===v.m)); showHint(v.m); }
   $('modes').addEventListener('click',e=>{ const m=e.target.dataset.m; if(m) { setMode(m); setViewOn(-1); } });
   function showHint(mo){ const m=mo||player.mode,h=$('hint'); if(isTouch){ h.hidden=true; $('stick').hidden=m==='orbit'; return; }
-    h.textContent=m==='orbit'?'Kéo chuột để xoay, lăn để phóng to':m==='walk'?'Bấm vào cảnh để điều khiển bằng chuột. W A S D đi, Shift chạy, Esc nhả chuột':'Bấm vào cảnh rồi dùng W A S D. E lên, Q xuống'; h.hidden=false; clearTimeout(showHint.t); showHint.t=setTimeout(()=>h.hidden=true,7000); $('cross').hidden=m==='orbit'; }
+    h.textContent=m==='orbit'?'Kéo chuột để xoay, lăn để phóng to':m==='walk'?'Bấm vào cảnh để điều khiển bằng chuột. W A S D đi, Shift chạy, E tương tác, Esc nhả chuột':'Bấm vào cảnh rồi dùng W A S D. E lên, Q xuống'; h.hidden=false; clearTimeout(showHint.t); showHint.t=setTimeout(()=>h.hidden=true,7000); $('cross').hidden=m==='orbit'; }
   showHint();
 
   // Điều khiển chuột và bàn phím
@@ -324,7 +346,7 @@ async function main(){
     if(sx<-20||sy<-20||sx>MW+20||sy>MH+20) return; mg.save(); mg.translate(sx,sy); mg.rotate(a); mg.fillStyle='#f4c63a'; mg.strokeStyle='#0e1c38'; mg.lineWidth=2; mg.beginPath(); mg.moveTo(0,-12); mg.lineTo(8,9); mg.lineTo(0,5); mg.lineTo(-8,9); mg.closePath(); mg.fill(); mg.stroke(); mg.restore(); }
   function frame(){
     const dt=Math.min(clock.getDelta(),.05); t+=dt; windU.uTime.value=t; sky.uni.uTime.value=t;
-    player.update(dt); game.update(dt);
+    player.update(dt); game.update(dt); inter.update(dt);
     // Mức tầng và vị trí
     const c=camera.position,lv=player.mode==='orbit'?'':locate(c.x,c.y,c.z);
     let txt=player.mode==='orbit'?'Toàn cảnh':`${typeof lv.L==='number'?'Tầng '+lv.L:lv.L} · ${lv.name}`;
@@ -339,6 +361,7 @@ async function main(){
     if(!window.__manual) requestAnimationFrame(frame);
   }
   // Game và menu khởi đầu
+  const inter=createInteract({scene,camera,player,MATS,toast});
   const game=createGame({player,camera,scene,toast,
     setClock(h,bake){ hour=Math.max(5,Math.min(21,h)); $('time').value=hour; applySun(bake); },
     toMenu(){ player.tween=null; setMode('orbit'); setViewOn(0); const o=player.orbit; o.auto=!matchMedia('(prefers-reduced-motion: reduce)').matches; o.t.set(0,7,0); $('hint').hidden=true; $('cross').hidden=true; },
@@ -349,7 +372,7 @@ async function main(){
   if(game.enabled===false){ showHint('orbit'); $('c').focus({preventScroll:true}); }
   else { $('menu').hidden=false; setTimeout(()=>$('btnGame').focus(),60); }
   // Giao tiếp để chụp thử nghiệm
-  window.__app={game,player,camera,scene,renderer,info:{doorFixes:DOOR_FIXES,cityInfo,tris:meshes.reduce((a,m)=>a+m.geometry.index.count/3,0),meshes:meshes.length,col:colArr.length/9},setHour(h){ hour=h; applySun(true); },goto(p,y,x,m){ player.tween=null; player.mode=m||'fly'; player.pos.set(...p); player.yaw=y; player.pitch=x; player.vel.set(0,0,0); player.grounded=false; camera.position.set(...p); },step(n=1){ for(let i=0;i<n;i++) frame(); },setQ,VIEWS,hud(v){ document.body.classList.toggle('nohud',!v); $('hint').hidden=true; },walkTest(path){ return runWalk(player,path); },orbit(th,ph,r,tx,ty,tz){ const o=player.orbit; player.mode='orbit'; player.tween=null; o.auto=false; o.th=th;o.ph=ph;o.r=r; if(tx!==undefined) o.t.set(tx,ty,tz); }};
+  window.__app={inter,game,player,camera,scene,renderer,info:{doorFixes:DOOR_FIXES,cityInfo,tris:meshes.reduce((a,m)=>a+m.geometry.index.count/3,0),meshes:meshes.length,col:colArr.length/9},setHour(h){ hour=h; applySun(true); },goto(p,y,x,m){ player.tween=null; player.mode=m||'fly'; player.pos.set(...p); player.yaw=y; player.pitch=x; player.vel.set(0,0,0); player.grounded=false; camera.position.set(...p); },step(n=1){ for(let i=0;i<n;i++) frame(); },setQ,VIEWS,hud(v){ document.body.classList.toggle('nohud',!v); $('hint').hidden=true; },walkTest(path){ return runWalk(player,path); },orbit(th,ph,r,tx,ty,tz){ const o=player.orbit; player.mode='orbit'; player.tween=null; o.auto=false; o.th=th;o.ph=ph;o.r=r; if(tx!==undefined) o.t.set(tx,ty,tz); }};
   window.__ready=true;
   renderer.compile(scene,camera);
   frame();

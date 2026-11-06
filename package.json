@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "node tools/dev.mjs",
     "build": "node tools/build.mjs --min",
-    "test": "node tools/walktest.mjs && node tools/uitest.mjs && node tools/falltest.mjs",
+    "test": "node tools/walktest.mjs && node tools/uitest.mjs && node tools/interacttest.mjs && node tools/falltest.mjs",
     "test:walk": "node tools/walktest.mjs",
     "test:ui": "node tools/uitest.mjs",
     "shot": "node tools/shot.mjs",
@@ -15,7 +15,8 @@
     "letters": "node tools/make_letters.mjs",
     "rules:deploy": "npx -y firebase-tools@13.29.1 deploy --only firestore:rules",
     "test:fall": "node tools/falltest.mjs",
-    "build:game": "GAME=1 node tools/build.mjs --min"
+    "build:game": "GAME=1 node tools/build.mjs --min",
+    "test:interact": "node tools/interacttest.mjs"
   },
   "keywords": [],
   "author": "",

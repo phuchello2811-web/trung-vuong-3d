@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { X,Z,M,S,Y,ROOMS,SLABS,RAILS,COLS,WEST_COLS,PERGOLA_P,PERGOLA_Q,ROOF_RECTS,ROOF_MID,SKYLIGHT } from './plan.js';
 export { lattice as latticeDiamond };
 import { frameM } from './builder.js';
+import { DYN } from './dyn.js';
 
 const LV=[1,2,3,4,5];
 // Cửa thang máy inox: khung bao, hai cánh lùa có khe giữa, bảng nút gọi bên cạnh, số tầng phía trên
@@ -87,7 +88,7 @@ export const DOOR_FIXES=[];
 function roomOpenings(r,side,len){
   const O=[]; const winFn=(k)=>winFnBase(r.kind==='hall'?'grille':k); const dsign={Qmax:1,Qmin:-1,Pmax:-1,Pmin:1}[side];
   if(side===r.door){
-    const big=['class','lab','comp','lib','hall'].includes(r.kind);
+    const big=['class','lab','comp','lib','hall','music'].includes(r.kind);
     if(r.kind==='wc'){ const cx=Math.min(1.1,len/2-.8); O.push({s:cx,e:cx+1.5,h0:0,h1:2.45,fn:doorFn(dsign)});
       if(len>4) O.push({s:cx+2.4,e:len-.8,h0:1.5,h1:3.0,fn:breezeFn()}); }
     else if(big){ const dw=r.kind==='lib'||r.kind==='hall'?1.8:1.25; O.push({s:.45,e:.45+dw,h0:0,h1:2.45,fn:doorFn(dsign)}); O.push({s:len-.45-dw,e:len-.45,h0:0,h1:2.45,fn:doorFn(dsign)});
@@ -188,6 +189,12 @@ function uStair(b,frame,o){
     for(let i=0;i<n;i++){ const zz=z0+i*rz; b.box('stair',xa,xb,y0+i*ry,y0+(i+1)*ry,Math.min(zz,zz+rz),Math.max(zz,zz+rz)); b.box('ceil',xa,xb,y0+i*ry-.22,y0+i*ry,Math.min(zz,zz+rz),Math.max(zz,zz+rz),{faces:'xXy'}); }
     b.colQuad([xa,y0,z0],[xb,y0,z0],[xb,y1,z1],[xa,y1,z1]); b.colQuad([xa,y0-.05,z0],[xb,y0-.05,z0],[xb,y1-.05,z1],[xa,y1-.05,z1]);
   };
+  const railLine=(a,c)=>{ const L=Math.hypot(c[0]-a[0],c[2]-a[2]), n=Math.max(2,Math.round(L/.12));
+    for(let i=0;i<=n;i++){ const t=i/n,x=a[0]+(c[0]-a[0])*t,y=a[1]+(c[1]-a[1])*t,z=a[2]+(c[2]-a[2])*t; b.box('steel',x-.009,x+.009,y,y+1.05,z-.009,z+.009,{faces:'xXzZ'}); }
+    b.rod('steel',[a[0],a[1]+1.07,a[2]],[c[0],c[1]+1.07,c[2]],.024,6);
+    b.colQuad([a[0],a[1]-.4,a[2]],[c[0],c[1]-.4,c[2]],[c[0],c[1]+2.4,c[2]],[a[0],a[1]+2.4,a[2]]); };
+  for(const l of (o.openOuter||[])){ const y0=yOf(l),y1=yOf(l+1),ym=(y0+y1)/2,xo=W-.04,ze=zF+ld-.04;
+    railLine([xo,ym,zF],[xo,y1,zL]); railLine([xo,ym,zF],[xo,ym,ze]); railLine([xo,ym,ze],[.04,ym,ze]); }
   for(const l of levels){
     const y0=yOf(l),y1=yOf(l+1),ym=(y0+y1)/2;
     if(zL>0.01&&l>1) {} 
@@ -225,6 +232,15 @@ function buildStairs(b,extras){
   // S1: cầu thang chính khối Tây, ôm quanh thang máy
   const f1=frameM(540,127,1,0,0,-1);
   uStair(b,f1,{W:M(66),fw:M(22),zL:0,zF:2.8,ld:M(47)-2.8,levels:[1,2,3,4,5],yOf,mid:false});
+  // Cửa cuốn khoá lối lên sân thượng ở tầng 5
+  { const sv=b.m; b.setFrame(f1); const y=Y[5], x1=M(22)+.15;
+    b.box('alu',-.06,x1+.06,y+2.55,y+2.86,.0,.32);
+    for(let yy=y+.02;yy<y+2.55;yy+=.075) b.box('shutter',-.02,x1+.02,yy,yy+.066,.13,.15);
+    b.box('alu',-.06,0,y,y+2.55,.08,.2); b.box('alu',x1,x1+.06,y,y+2.55,.08,.2); b.box('alu',-.02,x1+.02,y,y+.05,.12,.17);
+    b.box('plasticDark',x1*.5-.08,x1*.5+.08,y+.05,y+.13,.15,.18);
+    b.box('plaster',-.06,x1+.06,y+2.86,Y[6]-.18,.05,.25,{collide:true}); b.solid(-.06,x1+.06,y,y+2.86,.05,.25);
+    DYN.push({kind:'shutter',pos:new THREE.Vector3(x1/2,y+1.3,.15).applyMatrix4(f1).toArray(),room:{L:5,P0:530,P1:575,Q0:110,Q1:155}});
+    b.setFrame(sv); }
   // thang máy
   b.boxPQ('darkTile',562.5,583.5,127-M(0)-27,127,0,Y[6]+2.6,{collide:true});
   { const f=frameM(573,127,1,0,0,1); const sv=b.m; b.setFrame(f); for(const L of LV) liftDoor(b,-M(6),M(6),Y[L],.01); b.setFrame(sv); }
@@ -237,17 +253,18 @@ function buildStairs(b,extras){
   // lối ra mái
   b.boxPQ('stain',540,606,127,128,Y[6]+2.5,Y[6]+2.9);
   // S2: cầu thang đầu khối Bắc
-  const f2=frameM(716.5,467,1,0,0,1);
-  uStair(b,f2,{W:M(71.5),fw:M(31),zL:M(13),zF:M(13)+2.75,ld:M(51)-M(13)-2.75,levels:[1,2,3,4],yOf,mid:false});
+  // Vào từ hành lang (P 716,5) là lên thẳng vế A; chiếu nghỉ ở cuối (sát tường P 788), vế B quay về
+  const f2=frameM(716.5,467,0,1,1,0);
+  uStair(b,f2,{W:M(45),fw:M(21),zL:0,zF:3.4,ld:M(71.5)-3.4,levels:[1,2,3,4],yOf,mid:false});
   for(const L of LV){ const y0=Y[L],y1=L<5?Y[L+1]-.18:Y[6]-.18;
     b.boxPQ('plaster',788-2,788,467,519,y0,y1,{collide:true});
-    b.boxPQ('plaster',716.5-2,716.5,480,519,y0,y1,{collide:true});
-    b.wall('plaster',X(519),Z(788),X(519),Z(716.5),y0,y1,.2,[{s:1.4,e:M(71.5)-1.4,h0:1.2,h1:3.2,fn:breezeFn()}]);
+    b.boxPQ('plaster',714.5,716.5,467,519,y0+2.45,y1,{collide:true});            // dầm trên lối vào, gắn số tầng
+    b.wall('plaster',X(515.5),Z(788),X(515.5),Z(716.5),y0,y1,.74,[{s:1.4,e:M(71.5)-1.4,h0:1.2,h1:3.2,fn:breezeFn()}]);
   }
   // S3: cầu thang chéo cạnh thang máy, khối giữa
   const f3=frameM(363,433,-48,25,23,46);
   const f3W=Math.hypot(48,25)/S,f3L=Math.hypot(23,46)/S;
-  uStair(b,f3,{W:f3W,fw:2.4,zL:1.2,zF:3.95,ld:f3L-3.95,levels:[1,2,3,4],yOf,mid:false});
+  uStair(b,f3,{W:f3W,fw:2.4,zL:1.2,zF:3.95,ld:f3L-3.95,levels:[1,2,3,4],yOf,mid:false,openOuter:[1]});
   const s=b.m; b.setFrame(f3);
   for(const L of LV){ const y0=Y[L],y1=L<5?Y[L+1]-.18:Y[6]-.18;
     b.box('plaster',-.2,0,y0,y1,.0,f3L,{collide:L>1||L==1,faces:'xXYyzZ'});
@@ -317,7 +334,7 @@ function buildPergola(b){
   // ghế băng kim loại 4 chỗ
   const bench=(p,q,n=4)=>{ const x=X(q),z=Z(p),L=n*.29; for(let i=0;i<n;i++){ const zz=z+(i-(n-1)/2)*.58; b.box('alu',x-.22,x+.2,.42,.46,zz-.26,zz+.26); b.box('alu',x+.15,x+.21,.46,.86,zz-.26,zz+.26); }
     b.box('steel',x-.03,x+.03,.04,.42,z-L+.12,z+L-.12); for(const e of [-1,1]) b.box('steel',x-.22,x+.2,0,.05,z+e*(L-.14)-.03,z+e*(L-.14)+.03); b.solid(x-.25,x+.25,0,.9,z-L,z+L); };
-  bench(520,503); bench(580,503); bench(640,503);
+  bench(614,503); bench(654,503);
   // cột đèn sân
   const lp=(p,q)=>{ const x=X(q),z=Z(p); b.cyl('steel',x,z,0,6.2,.07,{r1:.05,seg:10,collide:true}); b.rod('steel',[x,6.1,z],[x+.9,6.45,z],.035,6); b.box('streetLamp',x+.75,x+1.2,6.32,6.42,z-.13,z+.13); };
   lp(470,428); lp(640,428);
@@ -445,36 +462,58 @@ function buildWestExterior(b){
   b.boxPQ('ceil',520,632,171,184,3.52,3.6,{faces:'y'});
   b.boxPQ('valance',520,632,184,184.4,2.98,3.62,{faces:'X'});
   b.boxPQ('valance',520,520.4,171,184.4,2.98,3.62,{faces:'Z'}); b.boxPQ('valance',631.6,632,171,184.4,2.98,3.62,{faces:'z'});
-  // nền bóng sàn đa năng và đường vàng
-  b.prism('concrete',[[142,207],[293,207],[293,155],[394,155],[394,425],[397,505],[142,505]].map(p=>[X(p[1]),Z(p[0])]),0,.012,{noBottom:true,noSide:true});
-  // Sân cầu lông
-  const P0=331,P1=390,Q0=191,Q1=318,y=.016;
-  b.boxPQ('courtRed',P0-14,P1+14,Q0-14,Q1+14,0,y,{faces:'Y'}); b.boxPQ('courtGreen',P0-5,P1+5,Q0-5,Q1+5,0,y+.002,{faces:'Y'});
-  const line=(a,bb,c,dd)=>b.boxPQ('courtLine',a,bb,c,dd,0,y+.004,{faces:'Y'});
-  const w=.5; line(P0-w,P0+w,Q0,Q1); line(P1-w,P1+w,Q0,Q1); line(P0,P1,Q0-w,Q0+w); line(P0,P1,Q1-w,Q1+w); line(P0,P1,(Q0+Q1)/2-.9,(Q0+Q1)/2+.9);
-  line(P0+M(0)+4.3-w,P0+4.3+w,Q0,Q1); line(P1-4.3-w,P1-4.3+w,Q0,Q1); line((P0+P1)/2-w,(P0+P1)/2+w,Q0,Q0+47); line((P0+P1)/2-w,(P0+P1)/2+w,Q1-47,Q1);
-  line(P0,P1,Q0+7-w,Q0+7+w); line(P0,P1,Q1-7-w,Q1-7+w); line(P0,P1,Q0+45-w,Q0+45+w); line(P0,P1,Q1-45-w,Q1-45+w);
-  const qm=(Q0+Q1)/2; for(const p of [P0-2,P1+2]) b.cyl('steel',X(qm),Z(p),0,1.55,.035,{seg:10,caps:false});
-  b.boxPQ('white',P0-2,P1+2,qm-.02,qm+.02,1.47,1.52); b.boxPQ('plasticDark',P0-2,P1+2,qm-.012,qm+.012,.82,.84); for(let y=.9;y<1.47;y+=.08) b.boxPQ('plasticDark',P0-2,P1+2,qm-.004,qm+.004,y,y+.006); for(let p=P0-2;p<P1+2;p+=.8) b.boxPQ('plasticDark',p,p+.05,qm-.004,qm+.004,.82,1.48);
+  // Sàn epoxy xanh toàn khu sân có mái che (ảnh sân trường)
+  b.prism('epoxy',[[142,207],[293,207],[293,155],[394,155],[394,425],[397,505],[142,505]].map(p=>[X(p[1]),Z(p[0])]),0,.012,{noBottom:true,noSide:true});
+  // Sân bóng rổ mini: lòng sân 6,5 × 17,6 m giữa hai hàng cột, viền đỏ, vạch trắng, hai bảng rổ
+  { const P0=330,P1=391,Q0=172,Q1=338,y=.016,pc=(P0+P1)/2,qm=(Q0+Q1)/2;
+    b.boxPQ('courtRed',P0-8,P1+8,Q0-8,Q1+8,0,y,{faces:'Y'}); b.boxPQ('courtGreen',P0,P1,Q0,Q1,0,y+.002,{faces:'Y'});
+    const line=(a,bb,c,dd)=>b.boxPQ('courtLine',a,bb,c,dd,0,y+.005,{faces:'Y'}), w=.47;
+    line(P0,P1,Q0,Q0+w); line(P0,P1,Q1-w,Q1); line(P0,P0+w,Q0,Q1); line(P1-w,P1,Q0,Q1); line(P0,P1,qm-w/2,qm+w/2);
+    const ring=(P,Q,r,a0=0,len=Math.PI*2)=>{ const g=new THREE.RingGeometry(r-.025,r+.025,56,1,a0,len); g.rotateX(-Math.PI/2); b.add('courtLine',g,new THREE.Matrix4().makeTranslation(X(Q),y+.006,Z(P))); g.dispose(); };
+    ring(pc,qm,1.8);
+    const kd=55;   // vùng cấm 3,6 m × 5,8 m (sân mini)
+    for(const [qb,dir] of [[Q0,1],[Q1,-1]]){ const qf=qb+dir*kd;
+      b.boxPQ('courtRed',pc-17,pc+17,Math.min(qb,qf),Math.max(qb,qf),0,y+.003,{faces:'Y'});
+      line(pc-17,pc-17+w,Math.min(qb,qf),Math.max(qb,qf)); line(pc+17-w,pc+17,Math.min(qb,qf),Math.max(qb,qf)); line(pc-17,pc+17,qf-w/2,qf+w/2);
+      ring(pc,qf,1.8,dir>0?-Math.PI/2:Math.PI/2,Math.PI);
+      // vạch ba điểm bán kính 5 m quanh rổ, hai đoạn thẳng sát biên
+      const qr=qb+dir*14.8, R3=5, half=M(P1-P0)/2-.35, ang=Math.asin(half/R3), qs=qr+dir*Math.cos(ang)*R3*S;
+      ring(pc,qr,R3,(dir>0?0:Math.PI)-ang,2*ang);
+      for(const sg of [-1,1]){ const pp=pc+sg*half*S; line(pp-w/2,pp+w/2,Math.min(qb,qs),Math.max(qb,qs)); }
+      // bảng rổ: trụ sau đường biên ngang, tay vươn, bảng kính viền trắng, vành cam, lưới
+      const qbd=qb+dir*11.3, qp=qb-dir*8.5, xr=X(qr), zr=Z(pc), xb=X(qbd);
+      b.boxPQ('steel',pc-1.2,pc+1.2,qp-1.2,qp+1.2,0,3.35,{collide:true});
+      b.boxPQ('padBlue',pc-1.5,pc+1.5,qp-1.5,qp+1.5,0,1.9);
+      b.boxPQ('steel',pc-.7,pc+.7,Math.min(qp,qbd),Math.max(qp,qbd),3.15,3.3);
+      b.boxPQ('glass',pc-8.5,pc+8.5,qbd-.15,qbd+.15,2.9,3.95); b.boxPQ('white',pc-8.5,pc+8.5,qbd-.25,qbd+.25,3.9,3.95); b.boxPQ('white',pc-8.5,pc+8.5,qbd-.25,qbd+.25,2.9,2.95);
+      b.boxPQ('white',pc-8.5,pc-8,qbd-.25,qbd+.25,2.9,3.95); b.boxPQ('white',pc+8,pc+8.5,qbd-.25,qbd+.25,2.9,3.95);
+      b.boxPQ('white',pc-2.8,pc+2.8,qbd-dir*.3-.2,qbd-dir*.3+.2,3.04,3.09); b.boxPQ('white',pc-2.8,pc+2.8,qbd-dir*.3-.2,qbd-dir*.3+.2,3.47,3.52);
+      b.boxPQ('white',pc-2.8,pc-2.3,qbd-dir*.3-.2,qbd-dir*.3+.2,3.04,3.52); b.boxPQ('white',pc+2.3,pc+2.8,qbd-dir*.3-.2,qbd-dir*.3+.2,3.04,3.52);
+      b.boxPQ('rimOrange',pc-.5,pc+.5,Math.min(qbd,qr),Math.max(qbd,qr),3.03,3.06);
+      { const g=new THREE.TorusGeometry(.23,.011,6,28); g.rotateX(Math.PI/2); b.add('rimOrange',g,new THREE.Matrix4().makeTranslation(xr,3.05,zr)); g.dispose(); }
+      for(let a=0;a<12;a++){ const an=a/12*6.283; b.rod('white',[xr+Math.cos(an)*.23,3.05,zr+Math.sin(an)*.23],[xr+Math.cos(an+.5)*.14,2.62,zr+Math.sin(an+.5)*.14],.006,3); }
+      DYN.push({kind:'hoop',ring:[xr,3.05,zr]}); }
+  }
+  // Sân pickleball dưới cầu xanh: 6,1 × 13,41 m, vùng bếp 2,13 m mỗi bên lưới
+  { const P0=470,P1=596.3,Q0=445.3,Q1=502.8,y=.016,pm=(P0+P1)/2,qc=(Q0+Q1)/2,k=20.1,w=.47;
+    b.boxPQ('pickleGreen',P0-8,P1+8,Q0-2.4,Q1+2.4,0,y,{faces:'Y'}); b.boxPQ('pickleBlue',P0,P1,Q0,Q1,0,y+.002,{faces:'Y'});
+    const line=(a,bb,c,dd)=>b.boxPQ('courtLine',a,bb,c,dd,0,y+.005,{faces:'Y'});
+    line(P0,P0+w,Q0,Q1); line(P1-w,P1,Q0,Q1); line(P0,P1,Q0,Q0+w); line(P0,P1,Q1-w,Q1);
+    line(pm-k-w/2,pm-k+w/2,Q0,Q1); line(pm+k-w/2,pm+k+w/2,Q0,Q1); line(P0,pm-k,qc-w/2,qc+w/2); line(pm+k,P1,qc-w/2,qc+w/2);
+    for(const q of [Q0-2.6,Q1+2.6]) b.cyl('steel',X(q),Z(pm),0,.92,.035,{seg:10,collide:true});
+    b.boxPQ('white',pm-.15,pm+.15,Q0-2.6,Q1+2.6,.84,.9); b.boxPQ('plasticDark',pm-.04,pm+.04,Q0-2.6,Q1+2.6,.1,.12);
+    for(let yy=.16;yy<.84;yy+=.06) b.boxPQ('plasticDark',pm-.03,pm+.03,Q0-2.6,Q1+2.6,yy,yy+.006);
+    for(let q=Q0-2.4;q<Q1+2.4;q+=.55) b.boxPQ('plasticDark',pm-.03,pm+.03,q,q+.06,.1,.86);
+    b.solid(X(Q0-2.7),X(Q1+2.7),0,.9,Z(pm+.3),Z(pm-.3));
+    DYN.push({kind:'pickle',net:[X(qc),.9,Z(pm)],a:[X(qc+12),Z(P0+14)],b:[X(qc-12),Z(P1-14)]}); }
   const beamQ=[168,254,340,425],beamP=[262,326,394];
   for(const q of beamQ){ const y1=Y[3]-.18; b.boxPQ('plaster',303,396,q-2.2,q+2.2,y1-.62,y1); }
   for(const p of [326,394]){ const y1=Y[3]-.18; b.boxPQ('plaster',p-2.2,p+2.2,168,425,y1-.62,y1); }
   for(const q of [214,254,340,425]){ const y1=Y[2]-.18; b.boxPQ('plaster',155,262,q-2.2,q+2.2,y1-.55,y1); }
   for(let q=180;q<420;q+=24) for(let p=340;p<390;p+=24){ b.cyl('alu',X(q),Z(p),Y[3]-.2,Y[3]-.18,.11,{seg:12,caps:false}); b.cyl('lamp',X(q),Z(p),Y[3]-.205,Y[3]-.2,.09,{seg:12}); }
   for(let q=345;q<500;q+=24) for(let p=165;p<255;p+=26){ b.cyl('alu',X(q),Z(p),Y[2]-.2,Y[2]-.18,.11,{seg:12,caps:false}); b.cyl('lamp',X(q),Z(p),Y[2]-.205,Y[2]-.2,.09,{seg:12}); }
-  // Đường vàng phân khu sân, ảnh chi tiết
-  b.boxPQ('yellowLine',306,396,186,187,0,.02,{faces:'Y'}); b.boxPQ('yellowLine',306,307,186,323,0,.02,{faces:'Y'}); b.boxPQ('yellowLine',306,396,322,323,0,.02,{faces:'Y'});
-  // Bảng rổ gắn cao hai đầu sân, nhìn ra giữa sân
-  const hoop=(P,Q,f)=>{
-    b.boxPQ('white',P-.06,P+.06,Q-.9,Q+.9,2.95,3.95,{});
-    b.boxPQ('bikeRed',P-.055,P+.055,Q-.36,Q+.36,3.05,3.62,{faces:f>0?'Z':'z'});
-    const zf=Z(P)+f*.26;
-    b.cyl('bikeRed',X(Q),zf,2.62,2.65,.23,{seg:14,caps:false});
-    b.boxPQ('steel',Math.min(P,P-f*.3),Math.max(P,P-f*.3),Q-.04,Q+.04,2.62,3.0);
-    for(let a=0;a<8;a++){ const an=a/8*6.283; b.rod('white',[X(Q)+Math.cos(an)*.22,2.62,zf+Math.sin(an)*.22],[X(Q)+Math.cos(an)*.12,2.26,zf+Math.sin(an)*.12],.008,4); }
-    b.boxPQ('steel',P-.08,P+.08,Q-.08,Q+.08,0,2.95,{collide:true});
-  };
-  hoop(392,254,1); hoop(330,254,-1);
+  // Đường vàng bao quanh khu sân bóng rổ
+  b.boxPQ('yellowLine',316,405,158,159,0,.02,{faces:'Y'}); b.boxPQ('yellowLine',316,405,351,352,0,.02,{faces:'Y'}); b.boxPQ('yellowLine',316,317,158,352,0,.02,{faces:'Y'}); b.boxPQ('yellowLine',404,405,158,352,0,.02,{faces:'Y'});
   // Ghế nhựa đỏ xếp trong sân
   for(let i=0;i<5;i++) for(let j=0;j<4;j++){ const x=X(360+j*8.5),z=Z(346+i*8.5); b.cyl('courtRed',x,z,0,.29,.135,{seg:10,r1:.115,collide:true}); b.cyl('courtRed',x,z,.29,.315,.145,{seg:10}); }
   // Bảng CĂN TIN trên tường kho ở góc sân có mái che, quay vào sân

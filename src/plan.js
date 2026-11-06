@@ -26,8 +26,7 @@ export const ROOMS = [
   // Tầng 2
   room(2,303,368,57,127,'WC giáo viên','wc','Qmax','Qmin'),
   room(2,368,452,57,127,'Phòng Chuẩn bị cho Giảng dạy','office','Qmax','Qmin'),
-  room(2,452,491,57,127,'Phòng Phó Hiệu trưởng','office','Qmax','Qmin'),
-  room(2,491,540,57,127,'Phòng Phó Hiệu trưởng','office','Qmax','Qmin'),
+  room(2,452,540,57,127,'Phòng Âm nhạc','music','Qmax','Qmin','Pmax'),
   room(2,606,649,57,127,'Phòng Tài vụ','office','Qmax','Qmin'),
   room(2,649,691,57,127,'Phòng Hiệu trưởng','office','Qmax','Qmin'),
   room(2,716.5,788,57,92,'WC nam','wc','Pmin','Pmax'),
@@ -68,7 +67,7 @@ ROOMS.push(
 // Mặt sàn hành lang (P0,P1,Q0,Q1), các hình chữ nhật không chồng lên nhau.
 const coreW = [[303,540,57,153],[540,606,127,153],[606,716.5,57,153],[716.5,788,57,127]];
 const north = [[695,716.5,153,467],[716.5,788,127,467],[788,800,127,467]];
-const northEnd = [[695,716.5,467,512]];
+const northEnd = [[695,716.5,467,512]];   // cầu thang khối Bắc chiếm Q 467–512, tường dày Q 512–519
 export const SLABS = {
   2: [...coreW,...north,...northEnd,[662,695,430,510],
       [303,333,153,212],[237,333,212,255],[237,264,255,424],[237,397,424,433],
@@ -143,7 +142,8 @@ export function locate(x,y,z){
     if(Q>545) return {L,name:'Đường Yên Bái'};
     if(P>825||P>805&&Q<300) return {L,name:'Đường Phạm Hồng Thái'};
     if(P<135||Q<45) return {L,name:'Khu phố lân cận'};
-    if(P>=331&&P<=390&&Q>=191&&Q<=318) return {L,name:'Sân cầu lông'};
+    if(P>=322&&P<=399&&Q>=164&&Q<=346) return {L,name:'Sân bóng rổ'};
+    if(P>=462&&P<=604&&Q>=443&&Q<=505) return {L,name:'Sân pickleball'};
     if(P>=142&&P<394&&Q>=205) return {L,name:'Sân đa năng'};
     if(P>=695&&Q>=155&&Q<=370) return {L,name:'Khu để xe'};
     if(P>=394&&P<=694&&Q>=155&&Q<=425) return {L,name:'Sân trường'};
