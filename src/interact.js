@@ -109,14 +109,7 @@ export function createInteract({ scene, camera, player, MATS, toast }) {
   }
   function kick(a, t0) { const o = a.createOscillator(), g = a.createGain(); o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(45, t0 + .18); o.connect(g).connect(a.destination); g.gain.setValueAtTime(.9, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + .35); o.start(t0); o.stop(t0 + .4); }
   for (const d of DYN) {
-    if (d.kind === 'piano') targets.push({ pos: new THREE.Vector3(...d.pos), room: d.room, maxD: 3, label: () => 'Chơi đàn piano', act: () => {
-      const a = audio(); if (!a || a.currentTime < busyUntil) return;
-      // Kìa con bướm vàng (dân ca, giai điệu Frère Jacques)
-      const mel = [[0, 1], [2, 1], [4, 1], [0, 1], [0, 1], [2, 1], [4, 1], [0, 1], [4, 1], [5, 1], [7, 2], [4, 1], [5, 1], [7, 2],
-        [7, .5], [9, .5], [7, .5], [5, .5], [4, 1], [0, 1], [7, .5], [9, .5], [7, .5], [5, .5], [4, 1], [0, 1], [0, 1], [-5, 1], [0, 2], [0, 1], [-5, 1], [0, 2]];
-      let t = a.currentTime + .05; const beat = .36; for (const [n, l] of mel) { piano(a, hz(n), t, l * beat); if (l >= 1) piano(a, hz(n - 12), t, l * beat * .9); t += l * beat; }
-      busyUntil = t; toast('Đang chơi bài "Kìa con bướm vàng"');
-    } });
+    if (d.kind === 'piano') targets.push({ pos: new THREE.Vector3(...d.pos), room: d.room, maxD: 3, label: () => 'Chơi đàn piano', act: () => openPiano() });
     if (d.kind === 'drum') targets.push({ pos: new THREE.Vector3(...d.pos), room: d.room, maxD: 3, label: () => 'Đánh trống', act: () => {
       const a = audio(); if (!a || a.currentTime < busyUntil) return;
       let t = a.currentTime + .05; const q = .3;
@@ -124,6 +117,92 @@ export function createInteract({ scene, camera, player, MATS, toast }) {
       t += 16 * q / 2; noise(a, t, 1.2, 'highpass', 5000, .35); kick(a, t); busyUntil = t + .6; toast('Tùng tùng chát!');
     } });
   }
+
+  // ---------- đàn piano chơi được: phím trên màn hình, bàn phím máy tính, bài mẫu, tập chơi ----------
+  const SOL = ['Đô', 'Đô#', 'Rê', 'Rê#', 'Mi', 'Fa', 'Fa#', 'Son', 'Son#', 'La', 'La#', 'Si'];
+  const KEYMAP = { KeyA: 0, KeyW: 1, KeyS: 2, KeyE: 3, KeyD: 4, KeyF: 5, KeyT: 6, KeyG: 7, KeyY: 8, KeyH: 9, KeyU: 10, KeyJ: 11, KeyK: 12, KeyO: 13, KeyL: 14, KeyP: 15, Semicolon: 16 };
+  const KEYLBL = Object.fromEntries(Object.entries(KEYMAP).map(([k, v]) => [v, k === 'Semicolon' ? ';' : k.slice(3)]));
+  // bài mẫu: [nửa cung tính từ Đô 4, số phách]
+  const SONGS = {
+    buom: { n: 'Kìa con bướm vàng', beat: .36, notes: [[7, 1], [9, 1], [11, 1], [7, 1], [7, 1], [9, 1], [11, 1], [7, 1], [11, 1], [12, 1], [14, 2], [11, 1], [12, 1], [14, 2],
+      [14, .5], [16, .5], [14, .5], [12, .5], [11, 1], [7, 1], [14, .5], [16, .5], [14, .5], [12, .5], [11, 1], [7, 1], [7, 1], [2, 1], [7, 2], [7, 1], [2, 1], [7, 2]] },
+    sao: { n: 'Twinkle Twinkle Little Star', beat: .42, notes: [[0, 1], [0, 1], [7, 1], [7, 1], [9, 1], [9, 1], [7, 2], [5, 1], [5, 1], [4, 1], [4, 1], [2, 1], [2, 1], [0, 2],
+      [7, 1], [7, 1], [5, 1], [5, 1], [4, 1], [4, 1], [2, 2], [7, 1], [7, 1], [5, 1], [5, 1], [4, 1], [4, 1], [2, 2],
+      [0, 1], [0, 1], [7, 1], [7, 1], [9, 1], [9, 1], [7, 2], [5, 1], [5, 1], [4, 1], [4, 1], [2, 1], [2, 1], [0, 2]] },
+  };
+  let pianoEl = null, base = 0, learn = null, demoTimers = [], pianoOpen = false;
+  const isBlack = n => [1, 3, 6, 8, 10].includes(((n % 12) + 12) % 12);
+  function keyEl(n) { return pianoEl?.querySelector(`[data-n="${n}"]`); }
+  function flash(n, ms = 220) { const k = keyEl(n); if (!k) return; k.classList.add('down'); clearTimeout(k._t); k._t = setTimeout(() => k.classList.remove('down'), ms); }
+  function play(n, held) {
+    const a = audio(); if (!a) return;
+    piano(a, hz(n), a.currentTime + .005, .9); if (!held) flash(n);
+    if (learn) { const want = learn.song.notes[learn.i][0];
+      if (n === want) { learn.i++; if (learn.i >= learn.song.notes.length) { toast(`Hoàn thành bài "${learn.song.n}"!`); learn = null; } }
+      else learn.miss++;
+      renderLearn(); }
+  }
+  function renderLearn() {
+    if (!pianoEl) return; pianoEl.querySelectorAll('.pk.next').forEach(k => k.classList.remove('next'));
+    const info = pianoEl.querySelector('#pnInfo');
+    if (!learn) { info.textContent = 'Bấm phím bằng chuột, chạm, hoặc gõ phím trên bàn phím máy tính.'; return; }
+    const n = learn.song.notes[learn.i][0]; const k = keyEl(n); if (k) k.classList.add('next');
+    info.textContent = `Tập chơi "${learn.song.n}": nốt ${learn.i + 1}/${learn.song.notes.length} là ${SOL[((n % 12) + 12) % 12]} · bấm sai ${learn.miss} lần`;
+  }
+  function stopDemo() { demoTimers.forEach(clearTimeout); demoTimers = []; }
+  function demo(id) {
+    stopDemo(); learn = null; renderLearn(); const a = audio(); if (!a) return; const sg = SONGS[id]; let t = 0;
+    for (const [n, l] of sg.notes) { const tt = t; demoTimers.push(setTimeout(() => { piano(a, hz(n), a.currentTime + .005, l * sg.beat * 1.1); flash(n, l * sg.beat * 900); }, tt * 1000)); t += l * sg.beat; }
+    toast(`Đang chơi bài mẫu "${sg.n}"`);
+  }
+  function buildKeys() {
+    const kb = pianoEl.querySelector('.pkeys'); kb.replaceChildren();
+    const whites = []; for (let n = 0; n < 24; n++) if (!isBlack(n)) whites.push(n);
+    whites.forEach((n, i) => { const k = document.createElement('button'); k.className = 'pk w'; k.dataset.n = n; k.style.left = `calc(${i} * var(--kw))`; k.setAttribute('aria-label', SOL[n % 12] + ' ' + (4 + Math.floor(n / 12)));
+      const kl = KEYLBL[n - base]; k.innerHTML = `<span class="sol">${SOL[n % 12]}</span>${kl ? `<kbd>${kl}</kbd>` : ''}`; kb.append(k); });
+    for (let n = 0; n < 24; n++) if (isBlack(n)) { const wi = whites.indexOf(n - 1); const k = document.createElement('button'); k.className = 'pk b'; k.dataset.n = n; k.style.left = `calc(${wi + 1} * var(--kw) - var(--kw) * .3)`; k.setAttribute('aria-label', SOL[n % 12]);
+      const kl = KEYLBL[n - base]; k.innerHTML = kl ? `<kbd>${kl}</kbd>` : ''; kb.append(k); }
+    pianoEl.querySelector('#pnOct').textContent = `Phím máy tính: quãng ${base ? 'cao' : 'thấp'} (Z, X để đổi)`;
+    renderLearn();
+  }
+  function ensurePiano() {
+    if (pianoEl) return;
+    pianoEl = document.createElement('div'); pianoEl.id = 'piano'; pianoEl.className = 'pn'; pianoEl.setAttribute('role', 'dialog'); pianoEl.setAttribute('aria-label', 'Đàn piano'); pianoEl.hidden = true;
+    pianoEl.innerHTML = `<header><h2>Đàn piano · Phòng Âm nhạc 501</h2><div class="pbtns">
+      <button class="ib" data-demo="buom">Nghe "Kìa con bướm vàng"</button><button class="ib" data-demo="sao">Nghe "Twinkle Twinkle"</button>
+      <button class="ib" data-learn="buom">Tập chơi "Kìa con bướm vàng"</button><button class="ib" data-learn="sao">Tập chơi "Twinkle"</button>
+      <button class="ib" id="pnClose">Đóng <kbd>Esc</kbd></button></div></header>
+      <p id="pnInfo" class="pinfo"></p><div class="pscroll"><div class="pkeys"></div></div><p id="pnOct" class="pinfo mono"></p>`;
+    document.body.append(pianoEl);
+    pianoEl.addEventListener('click', e => { const d = e.target.closest('[data-demo]'), l = e.target.closest('[data-learn]');
+      if (d) demo(d.dataset.demo); if (l) { stopDemo(); learn = { song: SONGS[l.dataset.learn], i: 0, miss: 0 }; renderLearn(); } });
+    pianoEl.querySelector('#pnClose').addEventListener('click', closePiano);
+    // chuột và cảm ứng: bấm được nhiều phím, kéo tay lướt qua các phím
+    const down = new Map();
+    const kb = pianoEl.querySelector('.pkeys');
+    const hitKey = (x, y) => document.elementsFromPoint(x, y).find(el => el.classList?.contains('pk'));
+    kb.addEventListener('pointerdown', e => { const k = hitKey(e.clientX, e.clientY); if (!k) return; e.preventDefault(); kb.setPointerCapture(e.pointerId); down.set(e.pointerId, k); k.classList.add('down'); play(+k.dataset.n, true); });
+    kb.addEventListener('pointermove', e => { if (!down.has(e.pointerId)) return; const k = hitKey(e.clientX, e.clientY); const prev = down.get(e.pointerId); if (k && k !== prev) { prev?.classList.remove('down'); k.classList.add('down'); down.set(e.pointerId, k); play(+k.dataset.n, true); } });
+    const up = e => { const k = down.get(e.pointerId); k?.classList.remove('down'); down.delete(e.pointerId); };
+    kb.addEventListener('pointerup', up); kb.addEventListener('pointercancel', up);
+    buildKeys();
+  }
+  const held = new Set();
+  addEventListener('keydown', e => {
+    if (!pianoOpen) return;
+    if (e.code === 'Escape') { e.preventDefault(); closePiano(); return; }
+    if (e.code === 'KeyZ' || e.code === 'KeyX') { base = e.code === 'KeyZ' ? 0 : 12; buildKeys(); e.preventDefault(); return; }
+    const off = KEYMAP[e.code]; if (off === undefined || e.metaKey || e.ctrlKey) return;
+    e.preventDefault(); if (e.repeat || held.has(e.code)) return; held.add(e.code);
+    const n = base + off; if (n > 23) return; keyEl(n)?.classList.add('down'); play(n, true);
+  }, true);
+  addEventListener('keyup', e => { if (!pianoOpen) return; const off = KEYMAP[e.code]; if (off === undefined) return; held.delete(e.code); keyEl(base + off)?.classList.remove('down'); }, true);
+  function openPiano() {
+    ensurePiano(); audio(); pianoOpen = true; pianoEl.hidden = false; window.__panelOpen = true; player.frozen = true; player.keys = {};
+    if (document.pointerLockElement) document.exitPointerLock();
+    $('tPrompt').hidden = true; $('tAct').hidden = true; setTimeout(() => pianoEl.querySelector('.pk.w')?.focus({ preventScroll: true }), 30);
+  }
+  function closePiano() { if (!pianoOpen) return; pianoOpen = false; pianoEl.hidden = true; stopDemo(); learn = null; held.clear(); window.__panelOpen = false; player.frozen = false; $('c').focus({ preventScroll: true }); }
 
   // ---------- chọn vật đang nhìn, hiện gợi ý ----------
   let cur = null;
@@ -141,7 +220,7 @@ export function createInteract({ scene, camera, player, MATS, toast }) {
   }
   function act() { if (cur) cur.act(); }
   addEventListener('keydown', e => {
-    if (e.code !== 'KeyE' || e.repeat || player.mode !== 'walk') return;
+    if (pianoOpen || e.code !== 'KeyE' || e.repeat || player.mode !== 'walk') return;
     if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
     if (cur) { e.preventDefault(); act(); }
   });
@@ -150,10 +229,12 @@ export function createInteract({ scene, camera, player, MATS, toast }) {
   return {
     targets,
     act,
+    get pianoOpen() { return pianoOpen; }, openPiano, closePiano,
     get current() { return cur; },
     update(dt) {
       for (const a of anims) a(dt);
       acc += dt; if (acc < .08) return; acc = 0;
+      if (pianoOpen) return;
       cur = pick();
       const el = $('tPrompt'), btn = $('tAct');
       if (!el) return;

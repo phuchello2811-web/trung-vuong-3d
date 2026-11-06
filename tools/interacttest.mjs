@@ -20,7 +20,18 @@ await p.screenshot({path:'tools/out/i_board_closed.png'});
 await face('Tắt tivi',1.6); await W(400); res.tv_prompt=await prompt(); await p.keyboard.press('KeyE'); await W(300); res.tv_after=await prompt();
 await face('Ném bóng',4.5); await W(400); res.hoop_prompt=await prompt(); await p.keyboard.press('KeyE'); await W(500); await p.screenshot({path:'tools/out/i_ball.png'}); await W(900); res.hoop_toast=await toast();
 await face('pickleball',4); await W(400); res.pickle_prompt=await prompt(); await p.keyboard.press('KeyE'); await W(1200); await p.screenshot({path:'tools/out/i_pickle.png'});
-await face('Chơi đàn',1.6); await W(400); res.piano_prompt=await prompt(); await p.keyboard.press('KeyE'); await W(500); res.piano=[await toast(),await p.evaluate(()=>{ const c=[...document.querySelectorAll('*')]; return typeof AudioContext; })];
+await face('Chơi đàn',1.6); await W(400); res.piano_prompt=await prompt(); await p.keyboard.press('KeyE'); await W(400);
+res.piano_open=await p.evaluate(()=>({open:window.__app.inter.pianoOpen,visible:!document.getElementById('piano').hidden,keys:document.querySelectorAll('#piano .pk').length,frozen:window.__app.player.frozen}));
+await p.keyboard.down('KeyA'); await W(80); res.piano_keydown=await p.evaluate(()=>document.querySelector('#piano .pk[data-n="0"]').classList.contains('down')); await p.keyboard.up('KeyA');
+for(const k of ['KeyS','KeyD','KeyE','KeyW']) { await p.keyboard.press(k); await W(60); }
+const box=await p.evaluate(()=>{ const r=document.querySelector('#piano .pk.w[data-n="7"]').getBoundingClientRect(); return [r.x+r.width/2,r.y+r.height*.85]; }); await p.mouse.click(box[0],box[1]);
+await p.evaluate(()=>[...document.querySelectorAll('#piano [data-learn]')].find(b=>b.dataset.learn==='sao').click()); await W(100);
+for(const k of ['KeyA','KeyA','KeyG','KeyG','KeyH']) { await p.keyboard.press(k); await W(60); }
+res.piano_learn=await p.evaluate(()=>document.getElementById('pnInfo').textContent);
+await p.keyboard.press('KeyX'); await W(80); res.piano_octave=await p.evaluate(()=>document.getElementById('pnOct').textContent);
+await p.screenshot({path:'tools/out/i_piano.png'});
+await p.keyboard.press('Escape'); await W(200); res.piano_closed=await p.evaluate(()=>({open:window.__app.inter.pianoOpen,frozen:window.__app.player.frozen}));
+await face('Đánh trống',1.6);
 await face('Đánh trống',1.6); await W(400); res.drum_prompt=await prompt();
 await face('Cửa cuốn',1.8); await W(400); res.shutter_prompt=await prompt(); await p.keyboard.press('KeyE'); await W(300); res.shutter_toast=await toast();
 // chế độ bay: không hiện gợi ý (phím E dùng để bay lên)
