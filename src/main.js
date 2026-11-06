@@ -8,7 +8,7 @@ import { X,Z,M,S,Y,SITE,ROOMS,SLABS,locate,levelFromY,pqFromXZ,FLAG } from './pl
 import { Batch,frameM } from './builder.js';
 import { makeMaterials,textTexture } from './textures.js';
 import { buildSchool,DOOR_FIXES } from './school.js';
-import { buildInteriors,classNumbers } from './interiors.js';
+import { buildInteriors,classNumbers,BOARD_SIDE } from './interiors.js';
 import { buildSite,buildGardens,buildStatue,buildBikes,buildScooters,HEDGE } from './site.js';
 import { buildVegetation,windU } from './vegetation.js';
 import { buildCity } from './city.js';
@@ -85,8 +85,8 @@ async function classroomPrints(M4,mk){
     const pg=g.createLinearGradient(560,0,1900,0); pg.addColorStop(0,'#fbe3ef'); pg.addColorStop(1,'#e3ecff'); g.fillStyle=pg; g.fillRect(560,140,1340,420);
     g.fillStyle='#0b2470'; g.font=`700 44px ${F}`; g.fillText('TRƯỜNG TRUNG HỌC CƠ SỞ TRƯNG VƯƠNG',1230,250); g.fillStyle='#d21f26'; g.font=`800 96px ${F}`; g.fillText('CHÀO MỪNG',1230,380); g.fillStyle='#0b2470'; g.font=`600 40px ${F}`; g.fillText('88 Yên Bái, Hải Châu, Đà Nẵng',1230,470); }),{p:{roughness:.8}});
   M4.lecternLogo=mk(cv(256,330,(g,w,h)=>{ g.fillStyle='#1c3f9c'; g.fillRect(0,0,w,h); if(logoIm){ const lh=230,lw=lh*logoIm.width/logoIm.height; g.drawImage(logoIm,w/2-lw/2,20,lw,lh); } g.fillStyle='#fff'; g.textAlign='center'; g.font=`700 24px ${F}`; g.fillText('TRƯNG VƯƠNG',w/2,295); }));
-  const nums=[...classNumbers().values()];
-  for(const n of nums) M4['plate_'+n]=mk(cv(400,192,(g,w,h)=>{ g.fillStyle='#1c3f9c'; g.fillRect(0,0,w,h); g.strokeStyle='#f4c63a'; g.lineWidth=8; g.strokeRect(6,6,w-12,h-12); g.fillStyle='#fff'; g.textAlign='center'; g.font=`700 34px ${F}`; g.fillText('PHÒNG HỌC',w/2,66); g.font=`800 74px ${F}`; g.fillStyle='#f4c63a'; g.fillText(n,w/2,150); }));
+  const numEntries=[...classNumbers().entries()];
+  for(const [room,n] of numEntries) M4['plate_'+n]=mk(cv(400,192,(g,w,h)=>{ g.fillStyle='#1c3f9c'; g.fillRect(0,0,w,h); g.strokeStyle='#f4c63a'; g.lineWidth=8; g.strokeRect(6,6,w-12,h-12); g.fillStyle='#fff'; g.textAlign='center'; g.font=`700 34px ${F}`; g.fillText(room.kind==='music'?'PHÒNG ÂM NHẠC':'PHÒNG HỌC',w/2,66); g.font=`800 74px ${F}`; g.fillStyle='#f4c63a'; g.fillText(n,w/2,150); }));
 }
 function loadImg(src){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; }); }
 function canvasTex(c){ const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8; return t; }
@@ -372,7 +372,7 @@ async function main(){
   if(game.enabled===false){ showHint('orbit'); $('c').focus({preventScroll:true}); }
   else { $('menu').hidden=false; setTimeout(()=>$('btnGame').focus(),60); }
   // Giao tiếp để chụp thử nghiệm
-  window.__app={inter,game,player,camera,scene,renderer,info:{doorFixes:DOOR_FIXES,cityInfo,tris:meshes.reduce((a,m)=>a+m.geometry.index.count/3,0),meshes:meshes.length,col:colArr.length/9},setHour(h){ hour=h; applySun(true); },goto(p,y,x,m){ player.tween=null; player.mode=m||'fly'; player.pos.set(...p); player.yaw=y; player.pitch=x; player.vel.set(0,0,0); player.grounded=false; camera.position.set(...p); },step(n=1){ for(let i=0;i<n;i++) frame(); },setQ,VIEWS,hud(v){ document.body.classList.toggle('nohud',!v); $('hint').hidden=true; },walkTest(path){ return runWalk(player,path); },orbit(th,ph,r,tx,ty,tz){ const o=player.orbit; player.mode='orbit'; player.tween=null; o.auto=false; o.th=th;o.ph=ph;o.r=r; if(tx!==undefined) o.t.set(tx,ty,tz); }};
+  window.__app={inter,game,player,camera,scene,renderer,info:{boardSide:BOARD_SIDE,doorFixes:DOOR_FIXES,cityInfo,tris:meshes.reduce((a,m)=>a+m.geometry.index.count/3,0),meshes:meshes.length,col:colArr.length/9},setHour(h){ hour=h; applySun(true); },goto(p,y,x,m){ player.tween=null; player.mode=m||'fly'; player.pos.set(...p); player.yaw=y; player.pitch=x; player.vel.set(0,0,0); player.grounded=false; camera.position.set(...p); },step(n=1){ for(let i=0;i<n;i++) frame(); },setQ,VIEWS,hud(v){ document.body.classList.toggle('nohud',!v); $('hint').hidden=true; },walkTest(path){ return runWalk(player,path); },orbit(th,ph,r,tx,ty,tz){ const o=player.orbit; player.mode='orbit'; player.tween=null; o.auto=false; o.th=th;o.ph=ph;o.r=r; if(tx!==undefined) o.t.set(tx,ty,tz); }};
   window.__ready=true;
   renderer.compile(scene,camera);
   frame();

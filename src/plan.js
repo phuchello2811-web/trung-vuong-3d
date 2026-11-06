@@ -26,7 +26,8 @@ export const ROOMS = [
   // Tầng 2
   room(2,303,368,57,127,'WC giáo viên','wc','Qmax','Qmin'),
   room(2,368,452,57,127,'Phòng Chuẩn bị cho Giảng dạy','office','Qmax','Qmin'),
-  room(2,452,540,57,127,'Phòng Âm nhạc','music','Qmax','Qmin','Pmax'),
+  room(2,452,491,57,127,'Phòng Phó Hiệu trưởng','office','Qmax','Qmin'),
+  room(2,491,540,57,127,'Phòng Phó Hiệu trưởng','office','Qmax','Qmin'),
   room(2,606,649,57,127,'Phòng Tài vụ','office','Qmax','Qmin'),
   room(2,649,691,57,127,'Phòng Hiệu trưởng','office','Qmax','Qmin'),
   room(2,716.5,788,57,92,'WC nam','wc','Pmin','Pmax'),
@@ -51,7 +52,7 @@ ROOMS.push(
   room(5,303,368,57,127,'WC nữ','wc','Qmax','Qmin'),
   room(5,368,410,57,127,'Phòng Chuẩn bị','office','Qmax','Qmin'),
   room(5,410,540,57,127,'Phòng Thí nghiệm Vật lý','lab','Qmax','Qmin','Pmax'),
-  room(5,606,691,57,127,'Lớp học','class','Qmax','Qmin','Pmax'),
+  room(5,606,691,57,127,'Phòng Âm nhạc','music','Qmax','Qmin','Pmax'),   // phòng 501
   room(5,716.5,788,57,127,'WC nam','wc','Pmin','Pmax'),
   room(5,716.5,788,127,254,'Phòng Thí nghiệm Sinh học','lab','Pmin','Pmax','Qmax'),
   room(5,716.5,788,254,298,'Phòng Chuẩn bị','office','Pmin','Pmax'),

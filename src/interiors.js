@@ -46,8 +46,8 @@ function wallOf(r,side,m){
   if(n.dot(mid.clone().sub(a))<0) n.negate();
   return {len,n,at:t=>a.clone().addScaledVector(d,t)};
 }
-// Số phòng học theo tầng: 201, 202… (tạm đặt, chưa có danh sách phòng thật của trường)
-export function classNumbers(){ const cnt={},out=new Map(); for(const r of ROOMS) if(r.kind==='class'){ cnt[r.L]=(cnt[r.L]||0)+1; out.set(r,`${r.L}${String(cnt[r.L]).padStart(2,'0')}`); } return out; }
+// Số phòng theo tầng: 201, 202… (lớp học và phòng âm nhạc; phòng âm nhạc là 501 theo trường xác nhận, số các lớp còn lại tạm đặt)
+export function classNumbers(){ const cnt={},out=new Map(); for(const r of ROOMS) if(r.kind==='class'||r.kind==='music'){ cnt[r.L]=(cnt[r.L]||0)+1; out.set(r,`${r.L}${String(cnt[r.L]).padStart(2,'0')}`); } return out; }
 const NUM=classNumbers();
 // Rèm cửa hai bên mỗi cửa sổ trên tường ngoài (cùng công thức đặt cửa sổ với school.js)
 function curtains(b,r,m){
@@ -73,7 +73,7 @@ function classroom(b,r){
   const s=b.m; b.setFrame(m);
   const cx=W/2, py=.18, pd=1.9;
   const ow=wallOf(r,r.outer,m), outerLo=ow.n.x>0, dwl=wallOf(r,r.door,m), doorLo=dwl.n.x>0;
-  // Bục giảng nhỏ ở góc đầu lớp phía cửa sổ, chừa lối cửa ra vào
+  // Bục giảng nhỏ ở góc đầu lớp phía trong bên trái (phía cửa sổ), xa cửa ra vào
   const pw0=2.3, px0=outerLo?.1:W-.1-pw0, px1=px0+pw0, pcx=(px0+px1)/2;
   b.box('platform',px0,px1,0,py,.1,pd,{collide:true}); b.box('alu',px0,px1,py-.03,py+.005,pd-.03,pd+.005);
   if(outerLo) b.box('alu',px1-.03,px1+.005,py-.03,py+.005,.1,pd); else b.box('alu',px0-.005,px0+.03,py-.03,py+.005,.1,pd);
@@ -285,7 +285,7 @@ function stem(b,r){
 }
 export { roomFrame };
 
-// Phòng Âm nhạc (tầng 2): bảng kẻ khuông nhạc, đàn piano đứng, đàn organ giáo viên, bộ trống, đàn ghi-ta treo tường,
+// Phòng Âm nhạc (phòng 501, tầng 5): bảng kẻ khuông nhạc, đàn piano đứng, đàn organ giáo viên, bộ trống, đàn ghi-ta treo tường,
 // ghế nhựa xếp hình vòng cung. Bố trí theo phòng âm nhạc THCS thông thường, chưa có ảnh phòng thật.
 function music(b,r){
   const {m,W,D}=roomFrame(r,r.board||'Pmax'); const h=Y[r.L+1]-.18-Y[r.L]; const s=b.m; b.setFrame(m);
@@ -323,12 +323,30 @@ function music(b,r){
     b.box('chairBlue',-.2,.2,.42,.46,-.2,.2,{collide:true}); b.box('chairBlue',-.2,.2,.46,.86,.17,.2); for(const a2 of [-.17,.17]) for(const c2 of [-.17,.17]) b.box('deskFrame',a2-.012,a2+.012,0,.42,c2-.012,c2+.012,{faces:'xXzZ'}); b.setFrame(sv); };
   for(let row=0;row<4;row++){ const R=2.6+row*.95; for(let k=-4;k<=4;k++){ const a2=k*.15*(2.6/R)*1.15; const x=cx+Math.sin(a2)*R, z=.9+Math.cos(a2)*R; if(x<.6||x>W-.6||z>D-2.2) continue; chair(x,z,-a2); } }
   curtains(b,r,m);
+  { const dw2=wallOf(r,r.door,m), pt=dw2.at(.45+1.25+.35), o=-.13; wallQuad(b,'plate_'+NUM.get(r),pt.x+dw2.n.x*o,pt.z+dw2.n.z*o,-dw2.n.x,-dw2.n.z,2.15,.5,.24); }
   for(const a of [.3,.7]) for(const f of [.35,.72]) fan(b,W*a,h,D*f);
   for(const a of [.2,.5,.8]) for(const f of [.22,.52,.82]) tube(b,W*a,h,D*f);
   b.setFrame(s);
 }
 
+// Lớp học theo chuẩn: học sinh nhìn lên bảng thì cửa sổ ở bên trái (ánh sáng chiếu từ trái), cửa ra vào bên phải.
+// Mặt bằng dựng đối xứng nên vài phòng bị ngược; phòng nào cửa sổ rơi vào bên phải thì chuyển bảng sang tường đối diện.
+export const BOARD_SIDE=[];
+const OPP={Qmax:'Qmin',Qmin:'Qmax',Pmax:'Pmin',Pmin:'Pmax'};
+function windowOnLeft(r){
+  const {m}=roomFrame(r,r.board), z=new THREE.Vector3(), x=new THREE.Vector3(), y=new THREE.Vector3(); m.extractBasis(x,y,z);
+  const f=z.clone().negate().setY(0).normalize(), right=new THREE.Vector3().crossVectors(f,new THREE.Vector3(0,1,0));
+  const out={Qmax:[1,0],Qmin:[-1,0],Pmax:[0,-1],Pmin:[0,1]}[r.outer];   // pháp tuyến hướng ra ngoài trong toạ độ thế giới (x theo Q, z ngược P)
+  return right.x*out[0]+right.z*out[1]<0;
+}
+function fixBoardSides(){
+  for(const r of ROOMS){ if(!['class','lab','comp','music'].includes(r.kind)||!r.board) continue;
+    const ok=windowOnLeft(r); if(!ok){ r.board=OPP[r.board]; }
+    BOARD_SIDE.push(`${r.name} tầng ${r.L} (${r.P0|0},${r.Q0|0}): ${ok?'đúng sẵn':'đã chuyển bảng'} → cửa sổ bên ${windowOnLeft(r)?'trái':'PHẢI'}`); }
+}
+
 export function buildInteriors(b){
+  fixBoardSides();
   for(const r of ROOMS){
     if(r.kind==='class') classroom(b,r);
     else if(r.kind==='lab') lab(b,r,'slogan');

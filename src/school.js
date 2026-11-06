@@ -264,12 +264,13 @@ function buildStairs(b,extras){
   // S3: cầu thang chéo cạnh thang máy, khối giữa
   const f3=frameM(363,433,-48,25,23,46);
   const f3W=Math.hypot(48,25)/S,f3L=Math.hypot(23,46)/S;
-  uStair(b,f3,{W:f3W,fw:2.4,zL:1.2,zF:3.95,ld:f3L-3.95,levels:[1,2,3,4],yOf,mid:false,openOuter:[1]});
+  uStair(b,f3,{W:f3W,fw:2.4,zL:1.2,zF:3.95,ld:f3L-3.95,levels:[1,2,3,4],yOf,mid:false});
   const s=b.m; b.setFrame(f3);
   for(const L of LV){ const y0=Y[L],y1=L<5?Y[L+1]-.18:Y[6]-.18;
     b.box('plaster',-.2,0,y0,y1,.0,f3L,{collide:L>1||L==1,faces:'xXYyzZ'});
-    if(L>1) b.box('plaster',f3W,f3W+.2,y0,y1,1.2,f3L,{collide:true});
-    if(L>1) b.box('plaster',-.2,f3W+.2,y0,y1,f3L,f3L+.2,{collide:true});
+    // tường bao cầu thang ở mọi tầng, kể cả tầng 1 (mặt nhìn ra sân); chỉ chừa lối vào phía trước
+    b.box('plaster',f3W,f3W+.2,y0,y1,1.2,f3L,{collide:true});
+    b.box('plaster',-.2,f3W+.2,y0,y1,f3L,f3L+.2,{collide:true});
   }
   // thang máy chéo
   b.box('darkTile',f3W+.1,f3W+2.6,0,Y[6]+2.2,.2,2.8,{collide:true});
