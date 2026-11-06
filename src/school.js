@@ -213,7 +213,7 @@ function uStair(b,frame,o){
     // chiếu nghỉ tầng
     if(zL>.01){ const yt=yOf(l+1); b.box('floor',0,W,yt-.012,yt,0,zL,{faces:'xXYzZ'}); b.box('ceil',0,W,yt-.18,yt-.012,0,zL,{faces:'xXyzZ'}); b.solid(0,W,yt-.18,yt,0,zL); }
   }
-  if(zL>.01){ const yt=yOf(levels[0]); if(yt>.5){ b.box('floor',0,W,yt-.012,yt,0,zL,{faces:'xXYzZ'}); } }
+  if(zL>.01){ const yt=yOf(levels[0]); if(yt>.5){ b.box('floor',0,W,yt-.012,yt,0,zL,{faces:'xXYzZ'}); b.box('ceil',0,W,yt-.18,yt-.012,0,zL,{faces:'xXyzZ'}); b.solid(0,W,yt-.18,yt,0,zL); } }
   // Lan can chắn ngang giếng thang (khoảng trống giữa hai vế) ở mép chiếu nghỉ của mọi tầng
   { const mx=fw+.11,nx=W-fw-.11; if(nx-mx>.08) for(const l of [...levels,levels[levels.length-1]+1]){ const yt=yOf(l); if(yt<.5) continue;
       const n=Math.max(2,Math.round((nx-mx)/.12)); for(let i=0;i<=n;i++){ const x=mx+(nx-mx)*i/n; b.box('steel',x-.009,x+.009,yt,yt+1.05,zL+.02,zL+.04,{faces:'xXzZ'}); }
@@ -264,14 +264,19 @@ function buildStairs(b,extras){
   // S3: cầu thang chéo cạnh thang máy, khối giữa
   const f3=frameM(363,433,-48,25,23,46);
   const f3W=Math.hypot(48,25)/S,f3L=Math.hypot(23,46)/S;
-  uStair(b,f3,{W:f3W,fw:2.4,zL:1.2,zF:3.95,ld:f3L-3.95,levels:[1,2,3,4],yOf,mid:false});
+  // Theo mặt bằng: cầu thang chéo chỉ chạy từ tầng 2 lên tầng 5; tầng 1 chỗ này là sảnh trống cạnh thang máy
+  uStair(b,f3,{W:f3W,fw:2.4,zL:1.2,zF:3.95,ld:f3L-3.95,levels:[2,3,4],yOf,mid:false});
   const s=b.m; b.setFrame(f3);
-  for(const L of LV){ const y0=Y[L],y1=L<5?Y[L+1]-.18:Y[6]-.18;
-    b.box('plaster',-.2,0,y0,y1,.0,f3L,{collide:L>1||L==1,faces:'xXYyzZ'});
-    // tường bao cầu thang ở mọi tầng, kể cả tầng 1 (mặt nhìn ra sân); chỉ chừa lối vào phía trước
-    b.box('plaster',f3W,f3W+.2,y0,y1,1.2,f3L,{collide:true});
-    b.box('plaster',-.2,f3W+.2,y0,y1,f3L,f3L+.2,{collide:true});
-  }
+  // Sàn tầng 2 dưới chân cầu thang, cũng là trần sảnh tầng 1
+  { const yb=Y[2]; b.box('ceil',-.2,f3W+.2,yb-.18,yb-.012,1.2,f3L+.2,{faces:'xXyzZ'}); b.box('floor',-.2,f3W+.2,yb-.012,yb,1.2,f3L+.2,{faces:'Y'}); b.solid(-.2,f3W+.2,yb-.18,yb,1.2,f3L+.2); }
+  // Tường bao liền một khối từ sàn tầng 2 lên tới mái (không tách từng tầng); chừa lối vào phía hành lang
+  { const ya=Y[2]-.18, yt=Y[6]-.02;
+    b.box('plaster',-.2,0,ya,yt,.0,f3L,{collide:true});
+    b.box('plaster',f3W,f3W+.2,ya,yt,1.2,f3L,{collide:true});
+    b.box('plaster',-.2,f3W+.2,ya,yt,f3L,f3L+.2,{collide:true});
+    // mái che cầu thang và tường chắn mái
+    const yr=Y[6]; b.box('ceil',-.2,f3W+.2,yr-.18,yr-.02,0,f3L+.2,{faces:'y'}); b.box('roofTop',-.2,f3W+.2,yr-.04,yr,0,f3L+.2,{faces:'Y'}); b.solid(-.2,f3W+.2,yr-.18,yr,0,f3L+.2);
+    b.box('plaster',-.2,0,yr,yr+.9,0,f3L+.2,{collide:true}); b.box('plaster',f3W,f3W+.2,yr,yr+.9,0,f3L+.2,{collide:true}); b.box('plaster',-.2,f3W+.2,yr,yr+.9,f3L,f3L+.2,{collide:true}); }
   // thang máy chéo
   b.box('darkTile',f3W+.1,f3W+2.6,0,Y[6]+2.2,.2,2.8,{collide:true});
   for(const L of LV){ const sv=b.m; b.setFrame(sv.clone().multiply(new THREE.Matrix4().makeRotationY(Math.PI).setPosition(2*f3W+2.7,0,.4))); liftDoor(b,f3W+.75,f3W+1.95,Y[L],.2); b.setFrame(sv); }
