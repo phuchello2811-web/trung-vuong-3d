@@ -20,6 +20,7 @@ await p.screenshot({path:'tools/out/i_board_closed.png'});
 await face('Tắt tivi',1.6); await W(400); res.tv_prompt=await prompt(); await p.keyboard.press('KeyE'); await W(300); res.tv_after=await prompt();
 await face('Ném bóng',4.5); await W(400); res.hoop_prompt=await prompt(); await p.keyboard.press('KeyE'); await W(500); await p.screenshot({path:'tools/out/i_ball.png'}); await W(900); res.hoop_toast=await toast();
 await face('pickleball',4); await W(400); res.pickle_prompt=await prompt(); await p.keyboard.press('KeyE'); await W(1200); await p.screenshot({path:'tools/out/i_pickle.png'});
+await face('cầu lông',4); await W(400); res.badminton_prompt=await prompt();
 await face('Chơi đàn',1.6); await W(400); res.piano_prompt=await prompt(); await p.keyboard.press('KeyE'); await W(400);
 res.piano_open=await p.evaluate(()=>({open:window.__app.inter.pianoOpen,visible:!document.getElementById('piano').hidden,keys:document.querySelectorAll('#piano .pk').length,frozen:window.__app.player.frozen}));
 await p.keyboard.down('KeyA'); await W(80); res.piano_keydown=await p.evaluate(()=>document.querySelector('#piano .pk[data-n="0"]').classList.contains('down')); await p.keyboard.up('KeyA');

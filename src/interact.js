@@ -67,7 +67,7 @@ export function createInteract({ scene, camera, player, MATS, toast }) {
       else { const [a, b] = k % 2 ? [rally.b, rally.a] : [rally.a, rally.b];
         // đường bóng: đánh từ độ cao 0,9 m, nảy một lần ở 70% quãng đường, lên lại 0,9 m
         const x = a[0] + (b[0] - a[0]) * u, z = a[1] + (b[1] - a[1]) * u;
-        let y; if (u < .7) { const s = u / .7; y = .9 + (.04 - .9) * s + 2.2 * s * (1 - s); } else { const s = (u - .7) / .3; y = .04 + (.9 - .04) * s + 1.2 * s * (1 - s); }
+        let y; if (rally.high) y = 1.9 + 4.2 * u * (1 - u); else if (u < .7) { const s = u / .7; y = .9 + (.04 - .9) * s + 2.2 * s * (1 - s); } else { const s = (u - .7) / .3; y = .04 + (.9 - .04) * s + 1.2 * s * (1 - s); }
         pball.position.set(x, Math.max(.045, y), z); }
     }
   });
@@ -83,8 +83,11 @@ export function createInteract({ scene, camera, player, MATS, toast }) {
         shot = { p0, p1, t: 0, dur: .65 + dist * .07, h: 1 + dist * .18, phase: 'fly', hit }; ball.position.copy(p0); ball.visible = true;
       } });
     }
+    if (d.kind === 'badminton') {
+      targets.push({ pos: new THREE.Vector3(...d.net), maxD: 8, cone: .85, label: () => rally ? 'Đang đánh cầu lông…' : 'Xem đánh cầu lông', act: () => { if (rally) return; rally = { a: d.a, b: d.b, t: 0, n: 8, high: true }; pball.material.color.set(0xffffff); pball.visible = true; toast('Một pha đánh cầu qua lại 8 lần'); } });
+    }
     if (d.kind === 'pickle') {
-      targets.push({ pos: new THREE.Vector3(...d.net), maxD: 8, cone: .85, label: () => rally ? 'Đang đánh pickleball…' : 'Xem đánh pickleball', act: () => { if (rally) return; rally = { a: d.a, b: d.b, t: 0, n: 8 }; pball.visible = true; toast('Một pha đánh qua lại 8 lần'); } });
+      targets.push({ pos: new THREE.Vector3(...d.net), maxD: 8, cone: .85, label: () => rally ? 'Đang đánh pickleball…' : 'Xem đánh pickleball', act: () => { if (rally) return; rally = { a: d.a, b: d.b, t: 0, n: 8 }; pball.visible = true; pball.material.color.set(0xd8f04a); toast('Một pha đánh qua lại 8 lần'); } });
     }
     if (d.kind === 'shutter') {
       targets.push({ pos: new THREE.Vector3(...d.pos), room: d.room, maxD: 4, label: () => 'Cửa cuốn lên sân thượng', act: () => toast('Cửa cuốn đang khoá. Học sinh không được lên sân thượng.') });

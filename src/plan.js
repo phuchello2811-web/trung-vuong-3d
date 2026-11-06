@@ -143,7 +143,8 @@ export function locate(x,y,z){
     if(Q>545) return {L,name:'Đường Yên Bái'};
     if(P>825||P>805&&Q<300) return {L,name:'Đường Phạm Hồng Thái'};
     if(P<135||Q<45) return {L,name:'Khu phố lân cận'};
-    if(P>=322&&P<=399&&Q>=164&&Q<=346) return {L,name:'Sân bóng rổ'};
+    if(P>=317&&P<=404&&Q>=177&&Q<=332) return {L,name:'Sân cầu lông'};
+    if(P>=200&&P<=324&&Q>=343&&Q<=420) return {L,name:'Sân bóng rổ'};
     if(P>=462&&P<=604&&Q>=443&&Q<=505) return {L,name:'Sân pickleball'};
     if(P>=142&&P<394&&Q>=205) return {L,name:'Sân đa năng'};
     if(P>=695&&Q>=155&&Q<=370) return {L,name:'Khu để xe'};

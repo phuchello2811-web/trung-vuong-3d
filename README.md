@@ -15,7 +15,8 @@ Khi đi bộ, nhìn vào vật và nhấn `E` (điện thoại: nút Tương tá
 | Ở đâu | Nhấn E để |
 |---|---|
 | Lớp học | Kéo hai tấm bảng xanh vào che tivi hoặc kéo ra; bật, tắt tivi (hộp điều khiển cạnh bảng) |
-| Sân bóng rổ (sân có mái che) | Ném bóng vào rổ |
+| Sân bóng rổ (khu đa năng dưới giếng trời, bảng rổ gắn cột) | Ném bóng vào rổ |
+| Sân cầu lông (cạnh khán đài) | Xem một pha đánh cầu qua lại |
 | Sân pickleball (dưới cầu xanh) | Xem một pha đánh qua lại |
 | Phòng Âm nhạc 501 (tầng 5) | Mở đàn piano 2 quãng tám: bấm phím bằng chuột, cảm ứng hoặc bàn phím (A S D F G H J K L ; phím trắng, W E T Y U O P phím đen, Z X đổi quãng tám); nghe bài mẫu; tập chơi theo phím tô sáng. Đánh trống |
 | Cầu thang chính tầng 5 | Cửa cuốn lên sân thượng đang khoá |
