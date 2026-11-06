@@ -34,19 +34,35 @@ export class Player {
     else this.walk(dt,f,r,run);
     this.cam.position.copy(this.pos); this.cam.quaternion.setFromEuler(new THREE.Euler(this.pitch,this.yaw,0,'YXZ'));
   }
+  // Đẩy viên nang người chơi ra khỏi mọi tam giác va chạm; trả về độ dời
+  resolve(p){
+    const R=this.radius,seg=this.seg,tp=this.tri,cp=this.cap,box=this.box;
+    seg.start.copy(p); seg.start.y-=.08; seg.end.copy(p); seg.end.y-=this.eye-R; const s0=seg.end.clone();
+    box.makeEmpty(); box.expandByPoint(seg.start); box.expandByPoint(seg.end); box.min.addScalar(-R); box.max.addScalar(R);
+    this.bvh.shapecast({intersectsBounds:b=>b.intersectsBox(box),intersectsTriangle:tri=>{ const d=tri.closestPointToSegment(seg,tp,cp); if(d<R){ const dep=R-d,dir=cp.clone().sub(tp).normalize(); seg.start.addScaledVector(dir,dep); seg.end.addScaledVector(dir,dep); } return false; }});
+    return seg.end.clone().sub(s0);
+  }
   walk(dt,f,r,run){
     const sp=(run?3.4:this.speed)*(this.speedMul||1); const fw=new THREE.Vector3(-Math.sin(this.yaw),0,-Math.cos(this.yaw)),rt=new THREE.Vector3(Math.cos(this.yaw),0,-Math.sin(this.yaw));
     const steps=3,h=dt/steps,mv=new THREE.Vector3().addScaledVector(fw,f).addScaledVector(rt,r); if(mv.lengthSq()>1) mv.normalize(); mv.multiplyScalar(sp*h);
+    const want=Math.hypot(mv.x,mv.z),STEP=.38;
     for(let i=0;i<steps;i++){
+      const p0=this.pos.clone(),wasGround=this.grounded;
       if(this.grounded) this.vel.y=-1.2; else this.vel.y-=9.81*h;
       this.pos.addScaledVector(this.vel,h).add(mv);
-      const R=this.radius,top=this.pos.clone(); top.y-=.08; const bot=this.pos.clone(); bot.y-=this.eye-R;
-      this.seg.start.copy(top); this.seg.end.copy(bot); const s0=this.seg.end.clone();
-      this.box.makeEmpty(); this.box.expandByPoint(this.seg.start); this.box.expandByPoint(this.seg.end); this.box.min.addScalar(-R); this.box.max.addScalar(R);
-      const seg=this.seg,tp=this.tri,cp=this.cap,box=this.box;
-      this.bvh.shapecast({intersectsBounds:b=>b.intersectsBox(box),intersectsTriangle:tri=>{ const d=tri.closestPointToSegment(seg,tp,cp); if(d<R){ const dep=R-d,dir=cp.clone().sub(tp).normalize(); seg.start.addScaledVector(dir,dep); seg.end.addScaledVector(dir,dep); } return false; }});
-      const delta=seg.end.clone().sub(s0); this.grounded=delta.y>Math.abs(h*this.vel.y*.25)||delta.y>.0005;
+      const delta=this.resolve(this.pos); this.grounded=delta.y>Math.abs(h*this.vel.y*.25)||delta.y>.0005;
       const off=Math.max(0,delta.length()-1e-5); if(off>0){ delta.normalize(); this.pos.addScaledVector(delta,off); if(!this.grounded) this.vel.addScaledVector(delta,-delta.dot(this.vel)); else this.vel.set(0,0,0); }
+      // Bước lên bậc thấp (mép vỉa hè, bậc thềm): bị chặn ngang khi đang đứng trên sàn thì thử nhấc chân lên
+      const moved=Math.hypot(this.pos.x-p0.x,this.pos.z-p0.z);
+      if(wasGround&&want>1e-4&&moved<want*.35){
+        // thử: nhấc chân, bước tới một đoạn đủ dài để vượt mép bậc, rồi hạ xuống xem đứng được ở độ cao nào
+        const dir=new THREE.Vector3(mv.x,0,mv.z).normalize(),p1=p0.clone(); p1.y+=STEP; const up=this.resolve(p1); if(up.y<-1e-3) continue;
+        p1.addScaledVector(dir,Math.max(want,this.radius*.75)); const d1=this.resolve(p1); p1.add(d1);
+        if(Math.hypot(p1.x-p0.x,p1.z-p0.z)<this.radius*.5) continue;    // phía trước là tường, không phải bậc
+        p1.y-=STEP+.02; const d2=this.resolve(p1); p1.add(d2);
+        const rise=p1.y-p0.y;
+        if(rise>.01&&rise<=STEP+.01){ const q=p0.clone().add(mv); q.y+=rise+.002; this.resolve(q); this.pos.copy(q); this.vel.set(0,0,0); this.grounded=true; }
+      }
     }
     // an toàn nếu lọt khỏi bản đồ
     if(this.pos.y<-5){ this.pos.set(5.8,1.6,8); this.vel.set(0,0,0); }

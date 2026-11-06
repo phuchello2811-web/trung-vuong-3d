@@ -52,6 +52,57 @@ export function createGame(app) {
   };
   const toast = app.toast;
   const titleOf = xp => TITLES.filter(t => xp >= t[0]).pop()[1];
+  const periodOf = m => m < 420 ? 'trước giờ học' : m < 555 ? 'tiết 1–3' : m < 575 ? 'ra chơi' : m < 675 ? 'tiết 4–5' : m < 810 ? 'nghỉ trưa' : m < 1020 ? 'buổi chiều' : 'sắp tan học';
+
+  // ---- chỉ đường tới nhiệm vụ ----
+  let guideId = null, guideAuto = true;
+  const roomOf = test => ROOMS.find(test);
+  const center = r => ({ P: (r.P0 + r.P1) / 2, Q: (r.Q0 + r.Q1) / 2, L: r.L });
+  const SPOT = {
+    an_sang: { P: 179, Q: 270, L: 1, n: 'Căn tin' },
+    thi_nghiem: { ...center(roomOf(r => /KHTN/.test(r.name))), n: 'Phòng thí nghiệm KHTN' },
+    stem: { ...center(roomOf(r => r.kind === 'stem')), n: 'Phòng STEM' },
+    go_phim: { ...center(roomOf(r => r.kind === 'comp')), n: 'Phòng Tin học' },
+  };
+  // cầu thang dùng được cho mọi tầng: cầu thang chính khối Tây và cầu thang đầu khối Bắc
+  const STAIRS = [{ P: 573, Q: 140, n: 'cầu thang chính' }, { P: 705, Q: 492, n: 'cầu thang khối Bắc' }];
+  function guideQuest() {
+    if (guideId && (st.quests[guideId] || 0) < QUESTS[guideId].goal) return guideId;
+    if (!guideAuto) return null;
+    return Object.keys(QUESTS).find(id => (st.quests[id] || 0) < QUESTS[id].goal) || null;
+  }
+  function guideSpot(id, P, Q, L) {
+    if (SPOT[id]) return SPOT[id];
+    if (id === 'nhat_rac') { let b = null; for (const t of trash) if (t.on) { const d = Math.hypot(t.x - X(Q), t.z - Z(P)); if (!b || d < b.d) b = { d, t }; } return b ? { P: 480 - b.t.z * 9.42, Q: 294 + b.t.x * 9.42, L: 1, n: 'Rác gần nhất' } : null; }
+    if (id === 'hoc_bai') { let b = null; for (const r of ROOMS) if (r.kind === 'class') { const c = center(r), d = Math.hypot(c.P - P, c.Q - Q) + Math.abs(c.L - L) * 120; if (!b || d < b.d) b = { d, c }; } return b && { ...b.c, n: 'Lớp học gần nhất' }; }
+    return null;
+  }
+  // cột sáng đánh dấu đích, nhìn xuyên được qua tường
+  const beacon = new THREE.Group();
+  { const beam = new THREE.Mesh(new THREE.CylinderGeometry(.22, .22, 7, 20, 1, true), new THREE.MeshBasicMaterial({ color: 0xf4c63a, transparent: true, opacity: .28, depthWrite: false, depthTest: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+    beam.position.y = 3.5; beam.renderOrder = 5; beam.userData.noAO = true;
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(.28), new THREE.MeshBasicMaterial({ color: 0xffd75a, depthTest: false, transparent: true, opacity: .95 }));
+    gem.position.y = 2.4; gem.renderOrder = 6; gem.userData.noAO = true; gem.name = 'gem';
+    const ring = new THREE.Mesh(new THREE.RingGeometry(.45, .62, 40), new THREE.MeshBasicMaterial({ color: 0xf4c63a, transparent: true, opacity: .7, depthWrite: false, side: THREE.DoubleSide }));
+    ring.rotation.x = -Math.PI / 2; ring.position.y = .04; ring.userData.noAO = true; ring.name = 'ring';
+    beacon.add(beam, gem, ring); beacon.visible = false; beacon.traverse(o => { o.castShadow = false; o.userData.noAO = true; }); scene.add(beacon); }
+  function updateGuide(P, Q, L, t) {
+    const id = mode === 'game' && !panel ? guideQuest() : null; const g = $('gGuide');
+    if (!id) { g.hidden = true; beacon.visible = false; return; }
+    const sp = guideSpot(id, P, Q, L); if (!sp) { g.hidden = true; beacon.visible = false; return; }
+    let tgt = sp, label = `${QUESTS[id].n}`, sub;
+    if (sp.L !== L) { const s = STAIRS.reduce((a, b) => Math.hypot(b.P - P, b.Q - Q) < Math.hypot(a.P - P, a.Q - Q) ? b : a); tgt = { P: s.P, Q: s.Q, L }; sub = `${sp.L > L ? 'Lên' : 'Xuống'} tầng ${sp.L} bằng ${s.n} · ${Math.round(Math.hypot(s.P - P, s.Q - Q) / 9.42)} m`; }
+    else sub = `${sp.n}${sp.L > 1 ? ' · tầng ' + sp.L : ''} · ${Math.max(0, Math.round(Math.hypot(sp.P - P, sp.Q - Q) / 9.42))} m`;
+    $('gGuideT').textContent = label; $('gGuideD').textContent = sub; g.hidden = false;
+    const tx = X(tgt.Q), tz = Z(tgt.P), c = camera.position, dx = tx - c.x, dz = tz - c.z;
+    const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd); const rel = Math.atan2(fwd.x * dz - fwd.z * dx, fwd.x * dx + fwd.z * dz);
+    $('gArrow').style.transform = `rotate(${rel * 180 / Math.PI}deg)`;
+    beacon.visible = Math.hypot(dx, dz) > 1.2; beacon.position.set(tx, (Y[tgt.L] || 0) + .01, tz);
+    const gem = beacon.getObjectByName('gem'); gem.position.y = 2.4 + Math.sin(t * 2.2) * .12; gem.rotation.y = t * 1.4;
+    beacon.getObjectByName('ring').scale.setScalar(1 + .12 * Math.sin(t * 3));
+  }
+  // chữ "+xu" bay lên cạnh số xu
+  function coinFly(n) { const r = $('gCoins').getBoundingClientRect(); if (!r.width) return; const e = h('div', { class: 'coinfly', text: (n > 0 ? '+' : '') + n }); e.style.left = r.right + 6 + 'px'; e.style.top = r.top - 4 + 'px'; document.body.append(e); setTimeout(() => e.remove(), 1200); }
 
   function renderHud() {
     if (mode !== 'game') return;
@@ -59,14 +110,18 @@ export function createGame(app) {
     $('gCoins').textContent = st.coins; $('gXp').textContent = st.xp;
     $('gEnergyBar').style.width = st.energy + '%'; $('gEnergyBar').dataset.low = st.energy < 20 ? '1' : '';
     $('gEnergy').textContent = Math.round(st.energy);
-    $('gClock').textContent = `Ngày ${st.day} · ${fmtClock(st.clock)}`;
+    $('gClock').textContent = fmtClock(st.clock); $('gPeriod').textContent = periodOf(st.clock); $('gDay').textContent = 'Ngày ' + st.day;
+    const ids = Object.keys(QUESTS), nDone = ids.filter(id => (st.quests[id] || 0) >= QUESTS[id].goal).length; $('gQCount').textContent = `${nDone}/${ids.length}`;
+    const cur = guideQuest();
     ui.quest.replaceChildren(...Object.entries(QUESTS).map(([id, q]) => {
       const p = Math.min(q.goal, st.quests[id] || 0), done = p >= q.goal;
-      return h('div', { class: 'q' + (done ? ' done' : '') }, h('span', { class: 'qn', text: q.n }), h('span', { class: 'qp mono', text: done ? `Xong · +${q.reward} xu` : `${p}/${q.goal}` }));
+      return h('button', { class: 'q' + (done ? ' done' : '') + (id === cur ? ' sel' : ''), 'aria-pressed': id === cur ? 'true' : 'false', onclick: () => { guideId = done ? null : id; guideAuto = !guideId; renderHud(); } },
+        h('span', { class: 'qn', text: q.n }), h('span', { class: 'qp mono', text: done ? `Xong · +${q.reward} xu` : `${p}/${q.goal}` }),
+        h('span', { class: 'qbar' }, h('i', { style: `width:${p / q.goal * 100}%` })));
     }));
   }
   function changed(cloudNow) { renderHud(); saveT = 0; cloudDirty = true; if (cloudNow) cloudT = 9; }
-  function addCoins(n, why) { st.coins = Math.max(0, Math.min(LIMITS.coins, Math.round(st.coins + n))); if (n > 0 && why) toast(`+${n} xu · ${why}`); }
+  function addCoins(n, why) { st.coins = Math.max(0, Math.min(LIMITS.coins, Math.round(st.coins + n))); if (n) coinFly(n); if (n > 0 && why) toast(`+${n} xu · ${why}`); }
   function addXp(n) { const before = titleOf(st.xp); st.xp = Math.round(st.xp + n); const after = titleOf(st.xp); if (after !== before) toast(`Lên danh hiệu: ${after}`); }
   function useEnergy(n) { if (st.energy < n) { toast('Bạn mệt quá rồi. Xuống căn tin ăn gì đó để có thêm năng lượng.'); return false; } st.energy = Math.max(0, st.energy - n); return true; }
   function quest(id, n = 1) {
@@ -83,7 +138,7 @@ export function createGame(app) {
     panelClose = build(ui.pBody) || null; if (onClose) { const pc = panelClose; panelClose = () => { pc && pc(); onClose(); }; }
     setTimeout(() => (ui.panel.querySelector('[autofocus]') || $('gPanelX')).focus(), 30);
   }
-  function closePanel() { if (!panel) return; panelClose && panelClose(); panelClose = null; panel = null; ui.panel.hidden = true; window.__panelOpen = false; player.frozen = false; renderHud(); if (mode === 'game') $('c').focus({ preventScroll: true }); }
+  function closePanel() { if (!panel) return; prompt = undefined; panelClose && panelClose(); panelClose = null; panel = null; ui.panel.hidden = true; window.__panelOpen = false; player.frozen = false; renderHud(); if (mode === 'game') $('c').focus({ preventScroll: true }); }
   $('gPanelX').addEventListener('click', closePanel);
   ui.panel.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); closePanel(); } });
 
@@ -126,8 +181,10 @@ export function createGame(app) {
     for (const [P, Q] of [[400, 300], [690, 300], [560, 410], [250, 270], [380, 470]]) { const b = bin.clone(); b.position.set(X(Q), 0, Z(P)); scene.add(b); } }
 
   // ---- vòng lặp ----
+  let t2 = 0;
   function update(dt) {
-    if (mode !== 'game') return;
+    if (mode !== 'game') { beacon.visible = false; return; }
+    t2 += dt;
     const c = camera.position;
     if (!panel) {
       st.clock += dt; // 1 giây thật = 1 phút trong game
@@ -145,8 +202,10 @@ export function createGame(app) {
     let best = null;
     if (L === 1) for (const t of trash) if (t.on) { const d = Math.hypot(t.x - c.x, t.z - c.z); if (d < 1.6 && (!best || d < best.d)) best = { d, label: 'Nhặt rác bỏ vào thùng', act: () => pickTrash(t) }; }
     if (!best) for (const zn of zones) if (inRoom(zn.r, P, Q, L)) { best = zn; break; }
+    if (Math.floor(t2 * 4) !== Math.floor((t2 - dt) * 4)) { const w = $('whereT').textContent; if ($('gWhere').textContent !== w) $('gWhere').textContent = w; }
+    updateGuide(P, Q, L, t2);
     if (best !== prompt) { prompt = best; ui.prompt.hidden = !best || !!panel; ui.act.hidden = !best || !!panel; if (best) $('gPromptT').textContent = best.label; }
-    if (panel) { ui.prompt.hidden = true; ui.act.hidden = true; }
+    if (panel) { ui.prompt.hidden = true; ui.act.hidden = true; $('gGuide').hidden = true; beacon.visible = false; }
     saveT += dt; if (saveT > 10) { saveT = 0; writeLocal(st); }
     cloudT += dt; if (cloudDirty && user && cloudT > 12) { cloudT = 0; cloudDirty = false; pushCloud(); }
   }
@@ -172,8 +231,8 @@ export function createGame(app) {
       const draw = () => list.replaceChildren(...Object.entries(FOOD).map(([id, f]) => h('div', { class: 'item' },
         h('div', {}, h('b', { text: f.n }), h('span', { class: 'muted mono', text: ` ${f.price} xu · +${f.energy} năng lượng` })),
         h('div', { class: 'btns' },
-          h('button', { class: 'gb', disabled: st.coins < f.price || undefined, onclick: () => { st.coins -= f.price; st.energy = Math.min(100, st.energy + f.energy); if (st.clock < 600) quest('an_sang'); toast(`Đã ăn ${f.n.toLowerCase()}`); changed(true); draw(); } }, 'Mua và ăn'),
-          h('button', { class: 'gb ghost', disabled: st.coins < f.price || undefined, onclick: () => { st.coins -= f.price; st.inv[id] = (st.inv[id] || 0) + 1; if (st.clock < 600) quest('an_sang'); toast(`Đã cất ${f.n.toLowerCase()} vào cặp`); changed(true); draw(); } }, 'Cho vào cặp')))));
+          h('button', { class: 'gb', disabled: st.coins < f.price || undefined, onclick: () => { coinFly(-f.price); st.coins -= f.price; st.energy = Math.min(100, st.energy + f.energy); if (st.clock < 600) quest('an_sang'); toast(`Đã ăn ${f.n.toLowerCase()}`); changed(true); draw(); } }, 'Mua và ăn'),
+          h('button', { class: 'gb ghost', disabled: st.coins < f.price || undefined, onclick: () => { coinFly(-f.price); st.coins -= f.price; st.inv[id] = (st.inv[id] || 0) + 1; if (st.clock < 600) quest('an_sang'); toast(`Đã cất ${f.n.toLowerCase()} vào cặp`); changed(true); draw(); } }, 'Cho vào cặp')))));
       draw(); body.append(list, h('p', { class: 'muted mono', text: 'Thực đơn theo bảng ở căn tin của trường. Giá là xu trong game.' }));
     });
   }
@@ -227,7 +286,7 @@ export function createGame(app) {
         tabs.replaceChildren(...[['shop', 'Mua vật liệu'], ['craft', 'Chế tạo'], ['show', 'Trưng bày']].map(([k, n]) => h('button', { class: 'tab' + (tab === k ? ' on' : ''), role: 'tab', 'aria-selected': tab === k ? 'true' : 'false', onclick: () => { tab = k; draw(); } }, n)));
         if (tab === 'shop') view.replaceChildren(h('div', { class: 'shop' }, ...Object.entries(MATERIALS).map(([id, m]) => h('div', { class: 'item' },
           h('div', {}, h('b', { text: m.n }), h('span', { class: 'muted mono', text: ` ${m.price} xu · đang có ${count(st.inv, id)}` })),
-          h('div', { class: 'btns' }, ...[1, 5].map(n => h('button', { class: 'gb ghost', disabled: st.coins < m.price * n || undefined, onclick: () => { st.coins -= m.price * n; st.inv[id] = count(st.inv, id) + n; changed(); draw(); } }, `Mua ${n}`)))))));
+          h('div', { class: 'btns' }, ...[1, 5].map(n => h('button', { class: 'gb ghost', disabled: st.coins < m.price * n || undefined, onclick: () => { coinFly(-m.price * n); st.coins -= m.price * n; st.inv[id] = count(st.inv, id) + n; changed(); draw(); } }, `Mua ${n}`)))))));
         else if (tab === 'craft') view.replaceChildren(h('div', { class: 'shop' }, ...Object.entries(RECIPES).map(([id, r]) => {
           const can = Object.entries(r.need).every(([m, n]) => count(st.inv, m) >= n);
           return h('div', { class: 'item col' }, h('div', {}, h('b', { text: r.n }), h('span', { class: 'muted mono', text: ` trưng bày được ${r.value} xu` })),

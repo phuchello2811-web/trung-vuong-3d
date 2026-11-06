@@ -58,6 +58,16 @@ function breezeFn(){
   };
 }
 
+// Có sàn ngay bên ngoài một điểm trên tường không? Tầng 1 luôn có nền.
+function floorOutside(r,side,t){
+  if(r.L===1) return true;
+  const out=.9*S, isP=side[0]==='P', fix=r[side==='Pmin'?'P0':side==='Pmax'?'P1':side==='Qmin'?'Q0':'Q1'], sg=(side==='Pmax'||side==='Qmax')?1:-1;
+  const along=(isP?r.Q0:r.P0)+t*S, P=isP?fix+sg*out:along, Q=isP?along:fix+sg*out;
+  const rects=SLABS[r.L]||[]; if(rects.some(q=>P>=q[0]&&P<=q[1]&&Q>=q[2]&&Q<=q[3])) return true;
+  const Ps=r.L===2?237:224; const poly=[[Ps,433],[363,433],[315,458],[302,467],[Ps,467]];
+  let c=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const a=poly[i],b=poly[j]; if((a[1]>Q)!==(b[1]>Q)&&P<(b[0]-a[0])*(Q-a[1])/(b[1]-a[1])+a[0]) c=!c; } return c;
+}
+export const DOOR_FIXES=[];
 function roomOpenings(r,side,len){
   const O=[]; const dsign={Qmax:1,Qmin:-1,Pmax:-1,Pmin:1}[side];
   if(side===r.door){
@@ -73,6 +83,9 @@ function roomOpenings(r,side,len){
     if(r.kind==='wc'){ O.push({s:.8,e:len-.8,h0:1.4,h1:3.1,fn:breezeFn()}); }
     else { const n=Math.max(1,Math.round(len/2.9)),w=len/n; for(let i=0;i<n;i++) O.push({s:i*w+.42,e:(i+1)*w-.42,h0:r.L===1?1.0:.9,h1:3.05,fn:winFn()}); }
   }
+  // Cửa nào bên ngoài không có sàn thì đổi thành cửa sổ có bậu cao
+  for(const o of O){ if(o.h0!==0) continue; const mid=(o.s+o.e)/2;
+    if(!floorOutside(r,side,mid)){ DOOR_FIXES.push(`${r.name} tầng ${r.L} cạnh ${side}`); o.h0=1.0; o.h1=2.75; o.fn=winFn(); } }
   return O;
 }
 
@@ -175,6 +188,12 @@ function uStair(b,frame,o){
     if(zL>.01){ const yt=yOf(l+1); b.box('floor',0,W,yt-.012,yt,0,zL,{faces:'xXYzZ'}); b.box('ceil',0,W,yt-.18,yt-.012,0,zL,{faces:'xXyzZ'}); b.solid(0,W,yt-.18,yt,0,zL); }
   }
   if(zL>.01){ const yt=yOf(levels[0]); if(yt>.5){ b.box('floor',0,W,yt-.012,yt,0,zL,{faces:'xXYzZ'}); } }
+  // Tầng trên cùng: nhánh A không còn bản thang đi lên nên khoang thang hở, chắn lan can quanh khoang
+  { const yt=yOf(levels[levels.length-1]+1),x1=fw+.11,n=Math.round(x1/.12);
+    for(let i=0;i<=n;i++){ const x=i/n*x1; b.box('steel',x-.009,x+.009,yt,yt+1.05,zL+.02,zL+.04,{faces:'xXzZ'}); }
+    b.rod('steel',[0,yt+1.07,zL+.03],[x1,yt+1.07,zL+.03],.024,6);
+    b.solid(0,x1+.04,yt,yt+2.4,zL-.02,zL+.08);
+    b.solid(x1-.04,x1+.04,yt,yt+2.4,zL,zF+ld); }
   b.setFrame(save);
 }
 

@@ -3,7 +3,7 @@ const srv=http.createServer((q,s)=>{ s.setHeader('Content-Type','text/html;chars
 const b=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:'new',args:['--use-angle=metal','--enable-gpu','--ignore-gpu-blocklist']});
 const p=await b.newPage(); await p.setViewport({width:1440,height:860}); const errs=[]; p.on('pageerror',e=>errs.push('ERR '+e.message)); p.on('console',m=>{ if(m.type()==='error') errs.push('CONSOLE '+m.text().slice(0,200)); });
 await p.goto(`http://localhost:${port}/`,{waitUntil:'load'}); await p.waitForFunction('window.__ready===true',{timeout:120000});
-const wait=ms=>new Promise(r=>setTimeout(r,ms)); await wait(1500);
+const wait=ms=>new Promise(r=>setTimeout(r,ms)); await wait(800); await p.click('#btnTour'); await wait(1600);
 const st=()=>p.evaluate(()=>{ const a=window.__app,c=a.camera.position; return {mode:a.player.mode,x:+c.x.toFixed(2),y:+c.y.toFixed(2),z:+c.z.toFixed(2),where:document.getElementById('whereT').textContent,floor:document.querySelector('#floors .on')?.textContent,load:document.getElementById('load').hidden}; });
 console.log('start',await st());
 const click=async t=>{ await p.evaluate(t=>{ [...document.querySelectorAll('#views button')].find(b=>b.textContent===t).click(); },t); await wait(1900); };

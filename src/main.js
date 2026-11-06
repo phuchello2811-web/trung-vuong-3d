@@ -7,7 +7,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { X,Z,M,S,Y,SITE,ROOMS,SLABS,locate,levelFromY,pqFromXZ,FLAG } from './plan.js';
 import { Batch,frameM } from './builder.js';
 import { makeMaterials,textTexture } from './textures.js';
-import { buildSchool } from './school.js';
+import { buildSchool,DOOR_FIXES } from './school.js';
 import { buildInteriors } from './interiors.js';
 import { buildSite,buildGardens,buildStatue,buildBikes,buildScooters,HEDGE } from './site.js';
 import { buildVegetation,windU } from './vegetation.js';
@@ -15,7 +15,7 @@ import { buildCity } from './city.js';
 import { createSky,sunENU,sunDirSite } from './sky.js';
 import { Player } from './player.js';
 import { letterGeometry } from './letters.js';
-import LOGO from './logo_data.js';
+const LOGO=document.getElementById('fav')?.href||'';   // logo trường: nhúng một lần trong thẻ favicon
 import { createGame } from './game/game.js';
 
 const $=id=>document.getElementById(id);
@@ -298,11 +298,11 @@ async function main(){
     setClock(h,bake){ hour=Math.max(5,Math.min(21,h)); $('time').value=hour; applySun(bake); },
     toMenu(){ player.tween=null; setMode('orbit'); setViewOn(0); const o=player.orbit; o.auto=!matchMedia('(prefers-reduced-motion: reduce)').matches; o.t.set(0,7,0); $('hint').hidden=true; $('cross').hidden=true; },
     toTour(){ goView(0); showHint('orbit'); },
-    toGame(){ const v=VIEWS[1]; player.frozen=false; player.flyTo(v.p,v.y,v.x,'walk',1.4); [...$('modes').children].forEach(c=>c.classList.toggle('on',c.dataset.m==='walk')); showHint('walk'); },
+    toGame(){ player.frozen=false; player.flyTo([X(498),1.6,Z(527)],Math.PI/2,.06,'walk',1.4); [...$('modes').children].forEach(c=>c.classList.toggle('on',c.dataset.m==='walk')); showHint('walk'); },
   });
   $('load').hidden=true; $('menu').hidden=false; setTimeout(()=>$('btnGame').focus(),60);
   // Giao tiếp để chụp thử nghiệm
-  window.__app={game,player,camera,scene,renderer,info:{cityInfo,tris:meshes.reduce((a,m)=>a+m.geometry.index.count/3,0),meshes:meshes.length,col:colArr.length/9},setHour(h){ hour=h; applySun(true); },goto(p,y,x,m){ player.tween=null; player.mode=m||'fly'; player.pos.set(...p); player.yaw=y; player.pitch=x; player.vel.set(0,0,0); player.grounded=false; camera.position.set(...p); },step(n=1){ for(let i=0;i<n;i++) frame(); },setQ,VIEWS,hud(v){ document.body.classList.toggle('nohud',!v); $('hint').hidden=true; },walkTest(path){ return runWalk(player,path); },orbit(th,ph,r,tx,ty,tz){ const o=player.orbit; player.mode='orbit'; player.tween=null; o.auto=false; o.th=th;o.ph=ph;o.r=r; if(tx!==undefined) o.t.set(tx,ty,tz); }};
+  window.__app={game,player,camera,scene,renderer,info:{doorFixes:DOOR_FIXES,cityInfo,tris:meshes.reduce((a,m)=>a+m.geometry.index.count/3,0),meshes:meshes.length,col:colArr.length/9},setHour(h){ hour=h; applySun(true); },goto(p,y,x,m){ player.tween=null; player.mode=m||'fly'; player.pos.set(...p); player.yaw=y; player.pitch=x; player.vel.set(0,0,0); player.grounded=false; camera.position.set(...p); },step(n=1){ for(let i=0;i<n;i++) frame(); },setQ,VIEWS,hud(v){ document.body.classList.toggle('nohud',!v); $('hint').hidden=true; },walkTest(path){ return runWalk(player,path); },orbit(th,ph,r,tx,ty,tz){ const o=player.orbit; player.mode='orbit'; player.tween=null; o.auto=false; o.th=th;o.ph=ph;o.r=r; if(tx!==undefined) o.t.set(tx,ty,tz); }};
   window.__ready=true;
   renderer.compile(scene,camera);
   frame();
