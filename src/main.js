@@ -28,13 +28,14 @@ async function classroomPrints(M4,mk){
   const F='"Be Vietnam Pro","Helvetica Neue",Arial,sans-serif', H='"Dancing Script",cursive';
   const cv=(w,h,draw)=>{ const c=document.createElement('canvas'); c.width=w; c.height=h; draw(c.getContext('2d'),w,h); return canvasTex(c); };
   const now=new Date(), thu=['Chủ nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'][now.getDay()];
-  M4.chalkboard=mk(cv(1440,500,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,w,h); gr.addColorStop(0,'#24493b'); gr.addColorStop(1,'#1d3d31'); g.fillStyle=gr; g.fillRect(0,0,w,h);
-    for(let i=0;i<60;i++){ g.fillStyle=`rgba(255,255,255,${.012+Math.random()*.03})`; g.beginPath(); g.ellipse(Math.random()*w,Math.random()*h,40+Math.random()*160,10+Math.random()*40,Math.random()*3,0,6.3); g.fill(); }
-    g.fillStyle='rgba(244,242,232,.92)'; g.textBaseline='alphabetic';
-    g.font=`600 40px ${H}`; g.textAlign='right'; g.fillText(`${thu}, ngày ${now.getDate()} tháng ${now.getMonth()+1} năm ${now.getFullYear()}`,w-50,70);
-    g.textAlign='center'; g.font=`700 64px ${H}`; g.fillText('Toán',w/2,150);
-    g.textAlign='left'; g.font=`600 46px ${H}`; g.fillText('Bài tập: Giải phương trình',90,250); g.fillText('a) 2x − 6 = 0          b) 3(x + 1) = 2x + 5',130,330);
-    g.fillText('Giải: a) 2x = 6  ⇒  x = 3',130,410); g.strokeStyle='rgba(244,242,232,.6)'; g.lineWidth=3; g.beginPath(); g.moveTo(90,170); g.lineTo(w-90,170); g.stroke(); }),{p:{roughness:.85}});
+  // Hai tấm bảng trượt: tấm trái ghi thứ ngày, môn học; tấm phải ghi bài tập
+  const chalkBg=(g,w,h)=>{ const gr=g.createLinearGradient(0,0,w,h); gr.addColorStop(0,'#24493b'); gr.addColorStop(1,'#1d3d31'); g.fillStyle=gr; g.fillRect(0,0,w,h);
+    for(let i=0;i<30;i++){ g.fillStyle=`rgba(255,255,255,${.012+Math.random()*.03})`; g.beginPath(); g.ellipse(Math.random()*w,Math.random()*h,30+Math.random()*90,8+Math.random()*30,Math.random()*3,0,6.3); g.fill(); } g.fillStyle='rgba(244,242,232,.92)'; };
+  M4.chalkL=mk(cv(560,480,(g,w,h)=>{ chalkBg(g,w,h); g.textAlign='left'; g.font=`600 34px ${H}`; g.fillText(thu+',',36,66); g.fillText(`ngày ${now.getDate()} tháng ${now.getMonth()+1} năm ${now.getFullYear()}`,36,112);
+    g.strokeStyle='rgba(244,242,232,.6)'; g.lineWidth=3; g.beginPath(); g.moveTo(36,140); g.lineTo(w-36,140); g.stroke();
+    g.textAlign='center'; g.font=`700 60px ${H}`; g.fillText('Toán',w/2,222); g.font=`600 36px ${H}`; g.fillText('Phương trình bậc nhất',w/2,290); g.fillText('một ẩn',w/2,338); }),{p:{roughness:.85}});
+  M4.chalkR=mk(cv(560,480,(g,w,h)=>{ chalkBg(g,w,h); g.textAlign='left'; g.font=`600 36px ${H}`; g.fillText('Bài tập: Giải phương trình',30,70);
+    g.fillText('a) 2x − 6 = 0',50,140); g.fillText('b) 3(x + 1) = 2x + 5',50,200); g.fillText('Giải:',30,280); g.fillText('a) 2x = 6  ⇒  x = 3',50,340); g.fillText('b) 3x + 3 = 2x + 5',50,400); g.fillText('⇒  x = 2',112,452); }),{p:{roughness:.85}});
   M4.poster5=mk(cv(540,760,(g,w,h)=>{ g.fillStyle='#fff8e6'; g.fillRect(0,0,w,h); g.strokeStyle='#c4161c'; g.lineWidth=16; g.strokeRect(8,8,w-16,h-16);
     g.fillStyle='#c4161c'; g.fillRect(8,8,w-16,150); g.fillStyle='#ffde00'; g.textAlign='center'; g.font=`800 44px ${F}`; g.fillText('5 ĐIỀU BÁC HỒ DẠY',w/2,78); g.font=`700 28px ${F}`; g.fillText('THIẾU NIÊN, NHI ĐỒNG',w/2,128);
     const L=['Yêu Tổ quốc, yêu đồng bào.','Học tập tốt, lao động tốt.','Đoàn kết tốt, kỷ luật tốt.','Giữ gìn vệ sinh thật tốt.','Khiêm tốn, thật thà, dũng cảm.'];

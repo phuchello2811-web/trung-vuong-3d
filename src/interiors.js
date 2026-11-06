@@ -73,17 +73,29 @@ function classroom(b,r){
   const cx=W/2, py=.18, pd=1.9;
   // bục giảng ốp gỗ, mép bo nhôm
   b.box('platform',.5,W-.5,0,py,.1,pd,{collide:true}); b.box('alu',.5,W-.5,py-.03,py+.005,pd-.03,pd+.005);
-  // bảng xanh 3,6 × 1,25 m, khung nhôm, máng phấn
-  const bx0=cx-1.8,bx1=cx+1.8,by0=1.0,by1=2.25;
-  b.box('boardFrame',bx0-.05,bx1+.05,by0-.05,by1+.05,.1,.13);
-  wallQuad(b,'chalkboard',cx,.132,0,1,(by0+by1)/2,bx1-bx0,by1-by0);
-  b.box('boardFrame',bx0,bx1,by0-.07,by0-.04,.1,.2); b.box('chalk',bx0+.3,bx0+.38,by0-.04,by0-.02,.15,.17); b.box('chalk',bx0+.5,bx0+.56,by0-.04,by0-.02,.16,.18); b.box('plasticDark',bx1-.5,bx1-.32,by0-.04,by0+.02,.13,.19);
+  // Bảng trượt có tivi ở giữa: khung nhôm dài 5 m, ray trên và ray dưới, tivi 86 inch gắn cố định phía sau,
+  // hai tấm bảng xanh trượt trên ray, đang kéo sang hai bên để lộ tivi
+  const BW=Math.min(5.0,W-1.4), by0=.95, by1=2.25, bh=by1-by0, bx0=cx-BW/2, bx1=cx+BW/2;
+  b.box('boardFrame',bx0-.06,bx1+.06,by0-.06,by1+.08,.1,.12);                     // tấm nền sau khung
+  b.box('boardFrame',bx0-.06,bx1+.06,by1+.02,by1+.1,.1,.24); b.box('plasticDark',bx0,bx1,by1+.02,by1+.035,.13,.21);   // ray trên
+  b.box('boardFrame',bx0-.06,bx1+.06,by0-.1,by0-.04,.1,.25);                       // ray dưới, kiêm máng phấn
+  b.box('boardFrame',bx0-.06,bx0,by0-.06,by1+.1,.1,.24); b.box('boardFrame',bx1,bx1+.06,by0-.06,by1+.1,.1,.24);   // nẹp hai đầu
+  const tvW=Math.min(1.92,BW-2.2), tvH=tvW*.5625;                                  // tivi 86 inch: 1,92 × 1,08 m
+  b.box('plasticDark',cx-tvW/2-.02,cx+tvW/2+.02,(by0+by1)/2-tvH/2-.02,(by0+by1)/2+tvH/2+.02,.12,.17);
+  wallQuad(b,'tvScreen',cx,.172,0,1,(by0+by1)/2,tvW,tvH);
+  const pw=(BW-tvW)/2-.02;                                                           // hai tấm trượt, mỗi tấm che vừa nửa tivi khi đóng
+  // khung phòng bị lật thì đổi hai tấm để tấm ghi ngày luôn nằm bên trái người nhìn
+  for(const [x0,mat] of [[bx0,b.flip?'chalkR':'chalkL'],[bx1-pw,b.flip?'chalkL':'chalkR']]){
+    b.box('alu',x0,x0+pw,by0-.03,by1,.18,.205); wallQuad(b,mat,x0+pw/2,.207,0,1,(by0+by1)/2,pw-.05,bh-.06);
+    b.box('alu',x0,x0+.025,by0-.03,by1,.205,.215); b.box('alu',x0+pw-.025,x0+pw,by0-.03,by1,.205,.215);
+    b.box('plasticDark',x0+pw/2-.12,x0+pw/2+.12,by0-.03,by0-.01,.205,.23); }        // tay kéo
+  b.box('chalk',bx0+.3,bx0+.38,by0-.04,by0-.02,.15,.17); b.box('chalk',bx0+.5,bx0+.56,by0-.04,by0-.02,.16,.18); b.box('plasticDark',bx1-.5,bx1-.32,by0-.04,by0+.02,.14,.2);
+  b.box('plasticDark',bx1+.12,bx1+.3,by0+.2,by0+.5,.1,.16);                          // hộp điều khiển tivi bên cạnh bảng
   // khẩu hiệu trên bảng
-  wallQuad(b,'slogan',cx,.106,0,1,2.62,3.0,.4);
-  // 5 điều Bác Hồ dạy bên trái, nội quy lớp học bên phải tivi
-  if(cx-1.8-.4-.7>.3) wallQuad(b,'poster5',cx-2.62,.106,0,1,1.75,.78,1.08);
-  b.box('plasticDark',cx+2.0,cx+3.42,1.18,2.0,.1,.15); wallQuad(b,'tvScreen',cx+2.71,.152,0,1,1.59,1.36,.76);
-  if(cx+3.42+.9<W-.2) wallQuad(b,'rules',cx+3.95,.106,0,1,1.7,.72,.98);
+  wallQuad(b,'slogan',cx,.106,0,1,2.65,3.0,.4);
+  // 5 điều Bác Hồ dạy và nội quy lớp học hai bên bảng, khi tường đủ rộng
+  const frontPosters=bx0-1.05>.25;
+  if(frontPosters){ wallQuad(b,'poster5',bx0-.65,.106,0,1,1.72,.78,1.08); wallQuad(b,'rules',bx1+.65,.106,0,1,1.7,.72,.98); }
   // bàn giáo viên trên bục, ghế, máy tính xách tay, lọ hoa
   const tz=1.05, ty=py; b.box('wood',cx-.75,cx+.75,ty+.72,ty+.76,tz-.35,tz+.35,{collide:true});
   b.box('wood',cx-.73,cx-.69,ty,ty+.72,tz-.33,tz+.33); b.box('wood',cx+.69,cx+.73,ty,ty+.72,tz-.33,tz+.33); b.box('wood',cx-.69,cx+.69,ty+.25,ty+.72,tz+.3,tz+.33);
@@ -99,7 +111,8 @@ function classroom(b,r){
   for(let c=0;c<cols;c++) for(let k=0;k<nRow;k++){ const x=x0+c*(dw+aisle), z=pd+.95+k*.92; desk(b,x,z,dw,.45); stool(b,x-.3,z+.42,true,1,'chairWood'); stool(b,x+.3,z+.42,true,1,'chairWood');
     if((c*7+k*3)%5===0) b.box('bagBlue',x-.48,x-.16,.46,.78,z+.52,z+.64); }
   // cuối lớp: bảng tin, tủ, thùng rác, chổi
-  wallQuad(b,'notice',cx,D-.11,0,-1,1.75,2.2,1.15); b.box('wood',cx-1.15,cx+1.15,1.12,1.18,D-.16,D-.1); b.box('wood',cx-1.15,cx+1.15,2.32,2.38,D-.16,D-.1);
+  wallQuad(b,'notice',cx,D-.11,0,-1,1.75,2.2,1.15);
+  if(!frontPosters){ const [l,rr]=b.flip?['rules','poster5']:['poster5','rules']; wallQuad(b,l,cx+1.75,D-.106,0,-1,1.72,.78,1.08); wallQuad(b,rr,cx-1.75,D-.106,0,-1,1.7,.72,.98); } b.box('wood',cx-1.15,cx+1.15,1.12,1.18,D-.16,D-.1); b.box('wood',cx-1.15,cx+1.15,2.32,2.38,D-.16,D-.1);
   b.box('wood',.3,1.5,0,1.8,D-.48,D-.1,{collide:true}); b.box('plastic',.32,1.48,.04,1.76,D-.5,D-.48);
   b.cyl('bin',W-.45,D-.4,0,.5,.18,{r1:.21,seg:14,collide:true}); b.rod('wood',[W-.2,0,D-.75],[W-.16,1.15,D-.15],.012,4); b.box('broom',W-.26,W-.12,0,.24,D-.8,D-.7);
   // đồng hồ treo tường phía trên bảng tin
